@@ -1,9 +1,11 @@
 import json
 import networkx as nx
+from api.api.api import Graph, Node, GraphVisualizer
+from datetime import datetime
 
 
 class JSONDataSource:
-    def __init__(self,json_file):
+    def __init__(self, json_file):
         self.json_file = json_file
         self.graph = nx.DiGraph()
 
@@ -14,8 +16,6 @@ class JSONDataSource:
         self.build_graph(data)
         return self.graph
 
-    def save_graph(self, output_file='output_graph.gml'):
-        nx.write_gml(self.graph, output_file)
 
     def build_graph(self, data, parent=None):
         if isinstance(data, dict):
@@ -34,3 +34,20 @@ class JSONDataSource:
         elif isinstance(data, list):
             for item in data:
                 self.build_graph(item, parent)
+
+    def convert_to_api_graph(self):
+        api_graph = Graph(directed=True)
+
+        node_mapping = {}
+        for node_id, data in self.graph.nodes(data=True):
+            node = Node(id=len(node_mapping) + 1)
+            for key, value in data.items():
+                node.set_attribute(key, value)
+            node_mapping[node_id] = node
+            api_graph.add_vertex(node)
+
+        for source, target in self.graph.edges():
+            if source in node_mapping and target in node_mapping:
+                api_graph.create_edge(node_mapping[source].get_id(), node_mapping[target].get_id())
+
+        return api_graph
