@@ -1,9 +1,100 @@
 <!DOCTYPE html>
 <html>
     <head>
-
+        <style>
+            body, html {
+                margin: 0;
+                padding: 0;
+                height: 100%;
+            }
+            .full-screen {
+                width: 100%;
+                height: 100%;
+                background-color: lightblue; /* Example background color */
+            }
+        </style>
+        <script src="https://d3js.org/d3.v7.min.js"></script>
     </head>
     <body>
-        Main page
+        <svg class="full-screen" id="main-view">
+
+        </svg>
+        <script>
+            const nodesDTO = {
+                'A': { id: 'A', ime: "Milos", prezime: "Milic" },
+                'B': { id: 'B' },
+                'C': { id: 'C' },
+                'D': { id: 'D' },
+                'E': { id: 'E' }
+            };
+
+            const nodes = Object.keys(nodesDTO)
+                .map( (key) => ({'id': key, 
+                    'textHTML': Object.keys(nodesDTO[key]).map( (attrKey) => (attrKey + ": " + nodesDTO[key][attrKey])).join("<br>")
+                }))
+
+            const links = [
+                { source: 'A', target: 'B' },
+                { source: 'A', target: 'C' },
+                { source: 'B', target: 'D' },
+                { source: 'C', target: 'D' },
+                { source: 'D', target: 'E' }
+            ];
+
+            const svg = d3.select('svg')
+            svg_select = document.querySelector("svg[id='main-view']")
+            svg_dimensions = svg_select.getBoundingClientRect()
+            const width = svg_dimensions.width
+            const height = svg_dimensions.height
+
+            const nodeStyle = "fill:rgba(0, 0, 0, 0);stroke-width:3;stroke:red;fill:white"
+            const textStyle = "padding:10px;width:fit-content;"
+
+            const simulation = d3.forceSimulation()
+                .force('charge', d3.forceManyBody().strength(-70))
+                .force('center', d3.forceCenter(width / 2, height / 2))
+
+            const nodeElements = svg.append('g')
+                .selectAll('rect')
+                .data(nodes)
+                .enter().append('rect')
+                .attr('width', 100)
+                .attr('height', 100)
+                .attr('style', nodeStyle)
+                .attr("nodeId", node => node['id'])
+                .attr('rx', '10px')
+                .attr('ry', '10px')
+
+            let textElements = svg.append('g')
+                .selectAll('foreignObject')
+                .data(nodes)
+                .enter().append('foreignObject')
+                .attr("width", "300")
+                .attr("height", "300")
+                .append("xhtml:div")
+                .attr("style", textStyle)
+                .attr("nodeId", node => node['id'])
+                .html(node => node['textHTML'])
+            
+            Object.keys(nodesDTO).forEach(
+                (key) => {
+                    let div = document.querySelector("div[nodeId='"+ key + "']")
+                    let rect =  document.querySelector("rect[nodeId='"+ key + "']")
+                    console.log(rect)
+                    rect.setAttribute('width', div.offsetWidth) 
+                    rect.setAttribute('height', div.offsetHeight)
+                })
+
+
+
+            simulation.nodes(nodes).on('tick', () => {
+                nodeElements
+                    .attr("x", node => node.x)
+                    .attr("y", node => node.y)
+                svg.selectAll('foreignObject')
+                    .attr("x", node => node.x)
+                    .attr("y", node => node.y)
+                })
+        </script>
     </body>
 </html>
