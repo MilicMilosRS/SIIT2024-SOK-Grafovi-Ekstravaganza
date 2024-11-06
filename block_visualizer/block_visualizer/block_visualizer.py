@@ -12,8 +12,8 @@ script = """
 
         // Create a simulation to position nodes
         const simulation = d3.forceSimulation(nodes)
-            .force("link", d3.forceLink().id(d => d.id).strength(0.02))
-            .force("charge", d3.forceManyBody().strength(-1000))
+            .force("link", d3.forceLink().id(d => d.id).strength(1))
+            .force("charge", d3.forceManyBody().strength(-20000))
             .force("collide", d3.forceCollide().strength(200).radius((node) => Math.max(node.width, node.height)).iterations(1))
             .on("tick", ticked);
         simulation.force('link').links(links)
@@ -51,7 +51,7 @@ script = """
 
 
         svg.selectAll('div[nodeId]').each((node) => {
-            let nodeDiv = document.querySelector(`div[nodeId=${node.id}]`)
+            let nodeDiv = document.querySelector(`div[nodeId='${node.id}']`)
             node.width = nodeDiv.offsetWidth
             node.height = nodeDiv.offsetHeight
         })

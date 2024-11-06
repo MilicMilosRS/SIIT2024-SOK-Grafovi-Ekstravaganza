@@ -1,0 +1,5 @@
+Metadata-Version: 2.1
+Name: data_source_json
+Version: 0.1
+Summary: A JSON data source plugin that parses JSON files and builds graphs.
+Requires-Dist: networkx
