@@ -2,7 +2,7 @@ from datetime import datetime
 from abc import ABC, abstractmethod
 
 class Node(object):
-    def __init__(self, id: int) -> None:
+    def __init__(self, id: str) -> None:
         self._attributes = {'id': id}
 
     def set_attribute(self, attr_name: str, value) -> None:
@@ -24,11 +24,10 @@ class Node(object):
         del self._attributes[attr_name]
         return True
         
-    
     def get_attributes(self) -> dict:
         return self._attributes
     
-    def get_id(self) -> int:
+    def get_id(self) -> str:
         return self._attributes['id']
     
 class Graph(object):
