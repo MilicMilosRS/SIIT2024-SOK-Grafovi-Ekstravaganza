@@ -1,0 +1,10 @@
+Metadata-Version: 2.4
+Name: block-visualizer
+Version: 0.1.0
+Summary: Visualizer plugin using Django templates and D3.js
+Author-email: Miloš Milić <milicmilos.rs@gmail.com>
+License: MIT
+Requires-Python: >=3.9
+Description-Content-Type: text/markdown
+Requires-Dist: graph-api
+Requires-Dist: Django>=4.0

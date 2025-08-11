@@ -1,0 +1,6 @@
+pyproject.toml
+block_visualizer/block_visualizer.egg-info/PKG-INFO
+block_visualizer/block_visualizer.egg-info/SOURCES.txt
+block_visualizer/block_visualizer.egg-info/dependency_links.txt
+block_visualizer/block_visualizer.egg-info/requires.txt
+block_visualizer/block_visualizer.egg-info/top_level.txt

@@ -1,0 +1,2 @@
+graph-api
+Django>=4.0

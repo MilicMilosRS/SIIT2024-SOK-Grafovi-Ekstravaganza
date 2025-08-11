@@ -1,0 +1,9 @@
+Metadata-Version: 2.4
+Name: data-source-json
+Version: 0.1.0
+Summary: Data source loader from JSON
+Author-email: Mirko Đukić <example@email.com>
+License: MIT
+Requires-Python: >=3.9
+Description-Content-Type: text/markdown
+Requires-Dist: graph-api
