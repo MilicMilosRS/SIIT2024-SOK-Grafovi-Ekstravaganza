@@ -9,5 +9,5 @@ def HomePage(request):
     g = js.convert_to_api_graph()
 
     visaulizer = BlockVisualizer()
-    context = {"main_view_script": visaulizer.visualize_graph(g)}
+    context = {"main_view": visaulizer.visualize_graph(g)}
     return render(request, 'index.html', context)

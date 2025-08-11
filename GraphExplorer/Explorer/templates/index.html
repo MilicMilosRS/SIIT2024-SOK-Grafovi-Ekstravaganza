@@ -16,10 +16,6 @@
         <script src="https://d3js.org/d3.v7.min.js"></script>
     </head>
     <body>
-        <svg class="full-screen" id="main-view">
-        </svg>
-        <script>
-            {{ main_view_script|safe }}
-        </script>
+        {{ main_view|safe }}
     </body>
 </html>
