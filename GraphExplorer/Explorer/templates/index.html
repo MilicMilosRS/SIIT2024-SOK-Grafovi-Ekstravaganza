@@ -6,16 +6,103 @@
                 margin: 0;
                 padding: 0;
                 height: 100%;
+                width: 100%;
             }
             .full-screen {
                 width: 100%;
                 height: 100%;
                 background-color: lightblue; /* Example background color */
             }
+
+            body{
+                display: flex;
+            }
+
+            .side-panel{
+                display: flex;
+                flex-direction: column;
+                width: 15%;
+                border-right: 3px solid orange;
+                background-color: #fad7a0;
+            }
+
+            .title-panel {
+                font-size: xx-large;
+                font-family: Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
+                color: orange;
+                min-height: 15%;
+                border-bottom: 3px solid orange;
+                flex-shrink: 0;
+            }
+            
+            .view-select-panel{
+                display: flex;
+                overflow: auto;
+                gap: 10px;
+                border-bottom: 3px solid orange;
+                padding-top: 5px;
+                padding-bottom: 5px;
+                flex-shrink: 0;
+            }
+
+            .view-thing{
+                background-color: rgba(255, 255, 255, 0.7);
+                border-color: rgba(0, 0, 0, 0.7);
+                border-radius: 20px;
+                border-width: medium;
+                border-style: solid;
+                padding: 10px;
+                width: fit-content;
+                flex-shrink: 0;
+            }
+
+            .tree-view{
+                border-bottom: 3px solid orange;
+                flex-grow: 1;
+            }
+
+            .bird-view{
+                flex-shrink: 0;
+                height: 30%;
+            }
+
         </style>
         <script src="https://d3js.org/d3.v7.min.js"></script>
     </head>
     <body>
+        <div class="side-panel">
+            <div class="title-panel">
+                <div style="margin: auto;">
+                    THE EPIC VISUALIZER
+                </div>
+            </div>
+            <div class="view-select-panel">
+                <div class="view-thing">
+                    View style 1
+                </div>
+                <div class="view-thing">
+                    View style 2
+                </div>
+                <div class="view-thing">
+                    View style 3
+                </div>
+                <div class="view-thing">
+                    View style 1
+                </div>
+                <div class="view-thing">
+                    View style 2
+                </div>
+                <div class="view-thing">
+                    View style 3
+                </div>
+            </div>
+            <div class="tree-view">
+                tree view goes here
+            </div>
+            <div class="bird-view">
+                bird view goes here
+            </div>
+        </div>
         {{ main_view|safe }}
     </body>
 </html>
