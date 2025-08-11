@@ -1,1 +1,1 @@
-from api.api import Graph, Node, GraphVisualizer
+from .graph_api import Node, Graph, GraphVisualizer

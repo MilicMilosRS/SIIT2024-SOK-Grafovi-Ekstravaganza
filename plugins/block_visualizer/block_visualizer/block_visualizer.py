@@ -1,4 +1,4 @@
-import api
+from graph_api import Graph
 import json
 
 script = """
@@ -101,7 +101,7 @@ script = """
     })(NODES, LINKS)
 """
 class BlockVisualizer():
-    def visualize_graph(self, g: api.Graph)->str:
+    def visualize_graph(self, g: Graph)->str:
         parsedNodes = []
         for node in g._vertices.values():
             parsedNodes.append(node._attributes)

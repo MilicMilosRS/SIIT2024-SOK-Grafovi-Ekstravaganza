@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "data-source-json"
-version = "0.1.0"
+version = "0.1.1"
 description = "Data source loader from JSON"
 authors = [
     { name = "Mirko Đukić", email = "example@email.com" }
@@ -14,6 +14,7 @@ requires-python = ">=3.9"
 license = { text = "MIT" }
 dependencies = [
     "graph-api",
+    "networkx"
 ]
 
 [tool.setuptools.packages.find]

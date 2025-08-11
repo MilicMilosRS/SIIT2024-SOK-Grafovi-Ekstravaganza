@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "graph-api"
-version = "0.1.0"
+version = "0.1.1"
 description = "Common API interfaces for graph plugins"
 authors = [
     { name = "Miloš Milić", email = "milicmilos.rs@gmail.com" }

@@ -1,6 +1,6 @@
 import json
 import networkx as nx
-from api import Graph, Node, GraphVisualizer
+from graph_api import Node, Graph, GraphVisualizer
 from datetime import datetime
 
 
