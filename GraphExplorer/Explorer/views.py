@@ -1,6 +1,7 @@
 from django.shortcuts import render
 from block_visualizer import BlockVisualizer
 from data_source_json import JSONDataSource
+from simple_visualizer import SimpleVisualizer
 from django.http import JsonResponse
 from django.http import HttpResponse
 import json
@@ -13,15 +14,18 @@ cli_instance = cli.CommandLine(graph_instance)
 visualizer = BlockVisualizer()
 
 def HomePage(request):
-    global graph_instance, cli_instance
+    style = request.GET.get("style", "simple")
 
-    if cli_instance is None:
-        cli_instance = cli.CommandLine(graph_instance)
+    js = JSONDataSource("../large_graph.json")
+    js.parse_json()
+    g = js.convert_to_api_graph()
+
+    if style == "block":
+        visualizer = BlockVisualizer()
     else:
-        cli_instance.graph = graph_instance
-    print("Nodes:", len(graph_instance._vertices))
-    print("Edges:", sum(len(v) for v in graph_instance._edges.values()))
-    context = {"main_view": visualizer.visualize_graph(graph_instance)}
+        visualizer = SimpleVisualizer()
+
+    context = {"main_view": visualizer.visualize_graph(g)}
     return render(request, 'index.html', context)
 
 
