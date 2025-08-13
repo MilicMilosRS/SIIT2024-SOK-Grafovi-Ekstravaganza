@@ -10,22 +10,23 @@ from .management.commands import cli
 from graph_api import Graph, GraphVisualizer
 
 graph_instance = Graph(False)
-cli_instance = cli.CommandLine(graph_instance)
+filepath = "../large_graph.json"
+cli_instance = cli.CommandLine(graph_instance,filepath)
 visualizer = BlockVisualizer()
 
 def HomePage(request):
-    style = request.GET.get("style", "simple")
+    global graph_instance
 
-    js = JSONDataSource("../large_graph.json")
+    style = request.GET.get("style","simple")
+    js = JSONDataSource(filepath)
     js.parse_json()
-    g = js.convert_to_api_graph()
-
+    graph_instance = js.convert_to_api_graph()
     if style == "block":
         visualizer = BlockVisualizer()
     else:
         visualizer = SimpleVisualizer()
 
-    context = {"main_view": visualizer.visualize_graph(g)}
+    context = {"main_view": visualizer.visualize_graph(graph_instance)}
     return render(request, 'index.html', context)
 
 
@@ -38,7 +39,6 @@ def run_command(request):
             command = data.get("command", "")
         except Exception:
             return JsonResponse({"output": "Invalid request"}, status=400)
-
         output = cli_instance.process_command(command)
         return JsonResponse({"output": output})
 
