@@ -51,6 +51,9 @@ class Graph(object):
         return new_vertex
     
     def _add_edge(self, id1: int, id2: int) -> None:
+        if id1 not in self._vertices or id2 not in self._vertices:
+            return
+
         if id1 not in self._edges:
             self._edges[id1] = []
         if id2 not in self._edges[id1]:
