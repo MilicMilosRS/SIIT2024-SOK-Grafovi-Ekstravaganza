@@ -2,25 +2,25 @@ from django.shortcuts import render
 from block_visualizer import BlockVisualizer
 from data_source_json import JSONDataSource
 from simple_visualizer import SimpleVisualizer
-from django.http import JsonResponse
-from django.http import HttpResponse
+from django.http import JsonResponse, HttpResponse
 import json
 from django.views.decorators.csrf import csrf_exempt
 from .management.commands import cli
-from graph_api import Graph, GraphVisualizer
+from graph_api import Graph
 
-graph_instance = Graph(False)
+# --- Initialize once at import time ---
 filepath = "../large_graph.json"
-cli_instance = cli.CommandLine(graph_instance,filepath)
+js = JSONDataSource(filepath)
+js.parse_json()
+graph_instance = js.convert_to_api_graph()
+
+cli_instance = cli.CommandLine(graph_instance, filepath)
 visualizer = BlockVisualizer()
 
 def HomePage(request):
-    global graph_instance
+    global visualizer
 
-    style = request.GET.get("style","simple")
-    js = JSONDataSource(filepath)
-    js.parse_json()
-    graph_instance = js.convert_to_api_graph()
+    style = request.GET.get("style", "simple")
     if style == "block":
         visualizer = BlockVisualizer()
     else:
@@ -28,8 +28,6 @@ def HomePage(request):
 
     context = {"main_view": visualizer.visualize_graph(graph_instance)}
     return render(request, 'index.html', context)
-
-
 
 @csrf_exempt
 def run_command(request):
@@ -39,6 +37,7 @@ def run_command(request):
             command = data.get("command", "")
         except Exception:
             return JsonResponse({"output": "Invalid request"}, status=400)
+
         output = cli_instance.process_command(command)
         return JsonResponse({"output": output})
 
@@ -46,6 +45,5 @@ def run_command(request):
 
 @csrf_exempt
 def partial_graph_view(request):
-    global visualizer, graph_instance
     html = visualizer.visualize_graph(graph_instance)
     return HttpResponse(html)
