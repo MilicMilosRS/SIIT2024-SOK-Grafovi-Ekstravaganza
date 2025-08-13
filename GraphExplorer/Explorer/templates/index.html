@@ -11,7 +11,7 @@
             .full-screen {
                 width: 100%;
                 height: 100%;
-                background-color: lightblue; /* Example background color */
+                background-color: lightblue;
             }
 
             body{
@@ -104,5 +104,130 @@
             </div>
         </div>
         {{ main_view|safe }}
+
+        <button onclick="toggleCLI()" style="position: fixed; bottom: 40px; left: 20px; z-index: 9999;">
+            Toggle CLI
+        </button>
+
+        <div id="cli-container" style="display:none; position: fixed; bottom: 0; left: 0; width: 100%; height: 200px; background: black; color: lime; font-family: monospace; overflow-y: auto; padding: 10px; z-index: 9998;">
+            <div id="cli-output" style="height: 140px; overflow-y: auto;"></div>
+            <input type="text" id="cli-input" placeholder="Enter command..." style="width: 100%; background: black; color: lime; border: none; outline: none;" autofocus>
+        </div>
+
+        <script>
+            function toggleCLI() {
+                const cli = document.getElementById('cli-container');
+                cli.style.display = (cli.style.display === 'none') ? 'block' : 'none';
+                if(cli.style.display === 'block') {
+                    document.getElementById('cli-input').focus();
+                }
+            }
+
+            document.getElementById('cli-input').addEventListener('keydown', function(event) {
+                if (event.key === 'Enter') {
+                    const command = this.value.trim();
+                    if(command.length === 0) return;
+                    
+                    fetch('/run-command/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': '{{ csrf_token }}'
+                        },
+                        body: JSON.stringify({ command: command })
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        const outputDiv = document.getElementById('cli-output');
+                        outputDiv.innerHTML += `<div>> ${command}</div>`;
+                        outputDiv.innerHTML += `<div>${data.output}</div>`;
+                        outputDiv.scrollTop = outputDiv.scrollHeight;
+                    })
+                    .catch(() => {
+                        const outputDiv = document.getElementById('cli-output');
+                        outputDiv.innerHTML += `<div style="color:red;">Error: could not contact server.</div>`;
+                    });
+
+                    this.value = '';
+                }
+            });
+        </script>
+        <script>
+            const nodes = NODES;
+            const links = LINKS;
+
+            const width = window.innerWidth * 0.85;
+            const height = window.innerHeight;
+
+            const svg = d3.select("#graph-container")
+                .append("svg")
+                .attr("width", width)
+                .attr("height", height);
+
+            const simulation = d3.forceSimulation(nodes)
+                .force("link", d3.forceLink(links).id(d => d.id).distance(100))
+                .force("charge", d3.forceManyBody().strength(-300))
+                .force("center", d3.forceCenter(width / 2, height / 2));
+
+            const link = svg.append("g")
+                .attr("stroke", "#999")
+                .attr("stroke-opacity", 0.6)
+                .selectAll("line")
+                .data(links)
+                .join("line")
+                .attr("stroke-width", 2);
+
+            const node = svg.append("g")
+                .attr("stroke", "#fff")
+                .attr("stroke-width", 1.5)
+                .selectAll("circle")
+                .data(nodes)
+                .join("circle")
+                .attr("r", 8)
+                .attr("fill", "orange")
+                .call(drag(simulation));
+
+            node.append("title")
+                .text(d => d.Name || d.id);
+
+            simulation.on("tick", () => {
+                link
+                    .attr("x1", d => d.source.x)
+                    .attr("y1", d => d.source.y)
+                    .attr("x2", d => d.target.x)
+                    .attr("y2", d => d.target.y);
+
+                node
+                    .attr("cx", d => d.x)
+                    .attr("cy", d => d.y);
+            });
+
+            // drag behavior helper function
+            function drag(simulation) {
+                function dragstarted(event) {
+                if (!event.active) simulation.alphaTarget(0.3).restart();
+                event.subject.fx = event.subject.x;
+                event.subject.fy = event.subject.y;
+                }
+                
+                function dragged(event) {
+                event.subject.fx = event.x;
+                event.subject.fy = event.y;
+                }
+                
+                function dragended(event) {
+                if (!event.active) simulation.alphaTarget(0);
+                event.subject.fx = null;
+                event.subject.fy = null;
+                }
+                
+                return d3.drag()
+                .on("start", dragstarted)
+                .on("drag", dragged)
+                .on("end", dragended);
+            }
+            </script>
+
+
     </body>
 </html>

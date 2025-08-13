@@ -1,0 +1,144 @@
+from django.core.management.base import BaseCommand, CommandError
+import shlex
+
+from graph_api import Graph, Node
+ 
+class CommandLine():
+    def __init__(self, graph: Graph):
+        self.graph = graph
+        pass
+    def handle_create(self, arg):
+        parsed = self.parse_cli_args(arg)
+        if parsed["type"] == "node":
+            node = Node(parsed["id"])
+            for k,v in parsed["properties"].items():
+                node.set_attribute(k,v)
+            self.graph.add_vertex(node)
+            return f"Node created successfully: {node.get_attributes()}"
+        elif parsed["type"] == "edge":
+            node1_id, node2_id = parsed["extra"][:2]
+            self.graph.create_edge(node1_id,node2_id)
+            return f"Edge created successfully (id={parsed['id']}) {node1_id} -> {node2_id} with props {parsed['properties']}"
+        else:
+            return "Invalid create command."
+
+    
+    def process_command(self, command):
+        tokens = shlex.split(command)
+        if not tokens:
+            return ""
+        
+        cmd = tokens[0].lower()
+
+        if cmd == "create":
+            return self.handle_create(tokens[1:])
+        elif cmd == "edit":
+            return self.handle_edit(tokens[1:])
+        elif cmd == "delete":
+            return self.handle_delete(tokens[1:])
+        elif cmd == "filter":
+            return self.handle_filter(tokens[1:])
+        elif cmd == "search":
+            return self.handle_search(tokens[1:])
+        elif cmd == "clear":
+            return self.handle_clear(tokens[1:])
+        else:
+            return (f"WARNING: Unknown command: {cmd}")
+
+    def handle_create(self, arg):
+        parsed = self.parse_cli_args(arg)
+        if parsed["type"] == "node":
+            node = Node(parsed["id"])
+            for k,v in parsed["properties"].items():
+                node.set_attribute(k,v)
+            self.graph.add_vertex(node)
+            return f"Node created successfully: {node.get_attributes()}"
+        elif parsed["type"] == "edge":
+            node1_id,node2_id = parsed["extra"][:2]
+            self.graph.create_edge(node1_id,node2_id)
+            return f"Edge created successfully (id={parsed['id']}) {node1_id} -> {node2_id} with props {parsed['properties']}"
+        else:
+            return ("ERROR: Invalid create command.")
+
+    def handle_edit(self,arg):
+        if arg[0] == "edge":
+            pass
+        elif  arg[0] == "node":
+            pass
+        else:
+            self.stdout.write(self.style.ERROR("Invalid create command."))
+
+    def handle_delete(self,arg):
+        if arg[0] == "edge":
+            pass
+        elif  arg[0] == "node":
+            pass
+        else:
+            self.stdout.write(self.style.ERROR("Invalid create command."))
+
+    def handle_filter(self,arg):
+        if arg[0] == "edge":
+            pass
+        elif  arg[0] == "node":
+            pass
+        else:
+            self.stdout.write(self.style.ERROR("Invalid create command."))
+    
+    def handle_search(self,arg):
+        if arg[0] == "edge":
+            pass
+        elif  arg[0] == "node":
+            pass
+        else:
+            self.stdout.write(self.style.ERROR("Invalid create command."))
+
+    def handle_clear(self,arg):
+        pass
+
+    def parse_cli_args(self, args):
+        """
+        Parses CLI arguments for commands like:
+        create node --id=2 --property Name=Tom --property Age=30 --property Gender=M --property Height=175
+        create edge --id=1 --property Name=Siblings 1 2
+
+        Returns:
+            {
+                "type": "edge" | "node",
+                "id": "1",
+                "properties": {"Name": "Siblings"},
+                "extra": ["1", "2"]   # remaining positional args
+            }
+        """
+        if isinstance(args, str):
+            tokens = shlex.split(args)
+        else:
+            tokens = args
+
+        if not tokens:
+            return {}
+
+        result = {
+            "type": None,
+            "id": None,
+            "properties": {},
+            "extra": []
+        }
+        result["type"] = tokens[0]
+        
+        i = 1
+        while i < len(tokens):
+            token = tokens[i]
+            if token.startswith("--id="):
+                result["id"] = token.split("=", 1)[1]
+            elif token == "--id" and i + 1 < len(tokens):
+                result["id"] = tokens[i+1]
+                i += 1
+            elif token == "--property" and i + 1 < len(tokens):
+                key, value = tokens[i+1].split("=", 1)
+                result["properties"][key] = value
+                i += 1
+            else:
+                result["extra"].append(token)
+            i += 1
+
+        return result
