@@ -48,5 +48,4 @@ def run_command(request):
 def partial_graph_view(request):
     global visualizer, graph_instance
     html = visualizer.visualize_graph(graph_instance)
-    print(html)
     return HttpResponse(html)
