@@ -10,14 +10,7 @@
 
         const nodes = nodeData.map(node => ({"id": node.id}))
 
-        // Create a simulation to position nodes
-        const simulation = d3.forceSimulation(nodes)
-            .force("link", d3.forceLink().id(d => d.id).strength(1))
-            .force("charge", d3.forceManyBody().strength(-20000))
-            .force("collide", d3.forceCollide().strength(200).radius((node) => Math.max(node.width, node.height)).iterations(1))
-            .on("tick", ticked);
-        simulation.force('link').links(links)
-
+        let simulation
 
         const linkElements = svg.append("g")
             .selectAll(".link")
@@ -50,15 +43,25 @@
             .html(node => nodeToHTML(node))
 
 
-        svg.selectAll('div[nodeId]').each((node) => {
-            let nodeDiv = document.querySelector(`div[nodeId='${node.id}']`)
-            node.width = nodeDiv.offsetWidth
-            node.height = nodeDiv.offsetHeight
-        })
+        setTimeout(() => {
+            svg.selectAll('div[nodeId]').each(node => {
+                const nodeDiv = document.querySelector(`div[nodeId='${node.id}']`);
+                node.width = nodeDiv.offsetWidth;
+                node.height = nodeDiv.offsetHeight;
+            });
 
-        svg.selectAll('foreignObject')
-            .attr("width", node => node.width)
-            .attr("height", node => node.height)
+            svg.selectAll('foreignObject')
+                .attr("width", node => node.width)
+                .attr("height", node => node.height);
+
+            // Create a simulation to position nodes
+            simulation = d3.forceSimulation(nodes)
+                .force("link", d3.forceLink().id(d => d.id).strength(0.02))
+                .force("charge", d3.forceManyBody().strength(-250))
+                .force("collide", d3.forceCollide().strength(1).radius((node) => Math.max(node.width, node.height)/2).iterations(10))
+                .on("tick", ticked);
+            simulation.force('link').links(links)
+        }, 0);
 
         svg.call(d3.zoom()
             // .extent([[0, 0], [width, height]])
@@ -68,6 +71,8 @@
         function zoomed({transform}) {
             d3.selectAll("svg g").attr("transform", transform);
         }
+
+        
 
         // Function to update positions
         function ticked() {

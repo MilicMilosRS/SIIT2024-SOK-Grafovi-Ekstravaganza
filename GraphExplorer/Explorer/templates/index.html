@@ -11,7 +11,7 @@
             .full-screen {
                 width: 100%;
                 height: 100%;
-                background-color: lightblue; /* Example background color */
+                background-color: lightblue;
             }
 
             body{
@@ -66,6 +66,10 @@
                 height: 30%;
             }
 
+            #main-view{
+                flex-grow: 1;
+            }
+
         </style>
         <script src="https://d3js.org/d3.v7.min.js"></script>
     </head>
@@ -103,6 +107,75 @@
                 bird view goes here
             </div>
         </div>
-        {{ main_view|safe }}
+    
+        <div id="main-view">
+            {{ main_view|safe }}
+        </div>
+
+        <button onclick="toggleCLI()" style="position: fixed; bottom: 40px; left: 20px; z-index: 9999;">
+            Toggle CLI
+        </button>
+
+        <div id="cli-container" style="display:none; position: fixed; bottom: 0; left: 0; width: 100%; height: 200px; background: black; color: lime; font-family: monospace; overflow-y: auto; padding: 10px; z-index: 9998;">
+            <div id="cli-output" style="height: 140px; overflow-y: auto;"></div>
+            <input type="text" id="cli-input" placeholder="Enter command..." style="width: 100%; background: black; color: lime; border: none; outline: none;" autofocus>
+        </div>
+
+        <script>
+            function toggleCLI() {
+                const cli = document.getElementById('cli-container');
+                cli.style.display = (cli.style.display === 'none') ? 'block' : 'none';
+                if(cli.style.display === 'block') {
+                    document.getElementById('cli-input').focus();
+                }
+            }
+
+            document.getElementById('cli-input').addEventListener('keydown', function(event) {
+                if (event.key === 'Enter') {
+                    const command = this.value.trim();
+                    if(command.length === 0) return;
+                    
+                    fetch('/run-command/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': '{{ csrf_token }}'
+                        },
+                        body: JSON.stringify({ command: command })
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        const outputDiv = document.getElementById('cli-output');
+                        outputDiv.innerHTML += `<div>> ${command}</div>`;
+                        outputDiv.innerHTML += `<div>${data.output}</div>`;
+                        outputDiv.scrollTop = outputDiv.scrollHeight;
+
+                        return fetch("/partial-graph")
+                    })
+                    .then(res => res.text())
+                    .then(html => {
+                        const container = document.getElementById('main-view');
+                        container.innerHTML = html;
+
+                        container.querySelectorAll("script").forEach(script => {
+                            const newScript = document.createElement("script");
+                            if (script.src) {
+                                newScript.src = script.src;
+                            } else {
+                                newScript.textContent = script.textContent;
+                            }
+                            document.body.appendChild(newScript);
+                            document.body.removeChild(newScript);
+                        });
+                    })
+                    .catch(() => {
+                        const outputDiv = document.getElementById('cli-output');
+                        outputDiv.innerHTML += `<div style="color:red;">Error: could not contact server.</div>`;
+                    });
+
+                    this.value = '';
+                }
+            });
+        </script>
     </body>
 </html>
