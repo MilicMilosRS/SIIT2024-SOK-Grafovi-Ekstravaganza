@@ -1,6 +1,0 @@
-pyproject.toml
-data_source_json/data_source_json.egg-info/PKG-INFO
-data_source_json/data_source_json.egg-info/SOURCES.txt
-data_source_json/data_source_json.egg-info/dependency_links.txt
-data_source_json/data_source_json.egg-info/requires.txt
-data_source_json/data_source_json.egg-info/top_level.txt
