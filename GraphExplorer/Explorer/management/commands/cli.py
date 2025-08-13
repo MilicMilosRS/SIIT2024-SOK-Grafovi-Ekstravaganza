@@ -48,12 +48,16 @@ class CommandLine():
     def handle_create(self, arg):
         parsed = self.parse_cli_args(arg)
         if parsed["type"] == "node":
+            if parsed["id"] in self.graph._vertices:
+                return ("ERROR: That node already exists.")
             node = Node(parsed["id"])
             for k,v in parsed["properties"].items():
                 node.set_attribute(k,v)
             self.graph.add_vertex(node)
             return f"Node created successfully: {node.get_attributes()}"
         elif parsed["type"] == "edge":
+            if parsed["id"] in self.graph._edges:
+                return ("ERROR: That edge already exists")
             node1_id,node2_id = parsed["extra"][:2]
             self.graph.create_edge(node1_id,node2_id)
             return f"Edge created successfully (id={parsed['id']}) {node1_id} -> {node2_id} with props {parsed['properties']}"
@@ -61,20 +65,40 @@ class CommandLine():
             return ("ERROR: Invalid create command.")
 
     def handle_edit(self,arg):
-        if arg[0] == "edge":
-            pass
-        elif  arg[0] == "node":
-            pass
+        parsed = self.parse_cli_args(arg)
+        
+        if parsed["type"] == "node":
+            if parsed["id"] not in self.graph._vertices:
+                return ("ERROR: That node doesn't exist in the graph.")
+            node = Node(parsed["id"])
+            for k,v in parsed["properties"].items():
+                node.set_attribute(k,v)
+            self.graph.edit_vertex(node)
+            return f"Node edited successfully: {node.get_attributes()}"
+        elif parsed["type"] == "edge":
+            node1_id, node2_id = parsed["extra"][:2]
+            self.graph.edit_edge(node1_id, node2_id)
+            return f"Edge edited successfully {node1_id} -> {node2_id} with props {parsed['properties']}"
         else:
-            self.stdout.write(self.style.ERROR("Invalid create command."))
+            return ("ERROR: Invalid create command.")
+        
+    def handle_delete(self, arg):
+        parsed = self.parse_cli_args(arg)
 
-    def handle_delete(self,arg):
-        if arg[0] == "edge":
-            pass
-        elif  arg[0] == "node":
-            pass
+        if parsed["type"] == "node":
+            node_id = parsed["id"]
+            if self.graph.delete_vertex(Node(node_id)):
+                return f"Node {node_id} deleted successfully."
+            else:
+                return f"ERROR: Node {node_id} doesn't exist."
+        elif parsed["type"] == "edge":
+            node1_id, node2_id = parsed["extra"][:2]
+            if self.graph.delete_edge(node1_id, node2_id):
+                return f"Edge {node1_id} -> {node2_id} deleted successfully."
+            else:
+                return f"ERROR: Edge {node1_id} -> {node2_id} doesn't exist."
         else:
-            self.stdout.write(self.style.ERROR("Invalid create command."))
+            return "ERROR: Invalid delete command."
 
     def handle_filter(self,arg):
         if arg[0] == "edge":
