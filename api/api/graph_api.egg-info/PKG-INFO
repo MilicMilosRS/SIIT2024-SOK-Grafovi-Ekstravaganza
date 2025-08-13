@@ -1,8 +1,0 @@
-Metadata-Version: 2.4
-Name: graph-api
-Version: 0.1.1
-Summary: Common API interfaces for graph plugins
-Author-email: Miloš Milić <milicmilos.rs@gmail.com>
-License: MIT
-Requires-Python: >=3.9
-Description-Content-Type: text/markdown
