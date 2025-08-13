@@ -7,25 +7,28 @@ from django.http import HttpResponse
 import json
 from django.views.decorators.csrf import csrf_exempt
 from .management.commands import cli
-from graph_api import Graph, GraphVisualizer
+from graph_api import Node, Graph, GraphVisualizer
 
-graph_instance = Graph(False)
+graph_instance = Graph(True)
+graph_instance.add_vertex(Node("gas1"))
+graph_instance.add_vertex(Node("gas2"))
+graph_instance.create_edge("gas1", "gas2", **{"attr1": "gas", "attr2": 13})
+graph_instance.create_edge("gas2", "gas1", **{"attr1": "drugi gas", "attr2": 13})
+
 cli_instance = cli.CommandLine(graph_instance)
 visualizer = BlockVisualizer()
 
 def HomePage(request):
-    style = request.GET.get("style", "simple")
+    global graph_instance
 
-    js = JSONDataSource("../large_graph.json")
-    js.parse_json()
-    g = js.convert_to_api_graph()
+    style = request.GET.get("style", "simple")
 
     if style == "block":
         visualizer = BlockVisualizer()
     else:
         visualizer = SimpleVisualizer()
 
-    context = {"main_view": visualizer.visualize_graph(g)}
+    context = {"main_view": visualizer.visualize_graph(graph_instance)}
     return render(request, 'index.html', context)
 
 
@@ -48,4 +51,5 @@ def run_command(request):
 def partial_graph_view(request):
     global visualizer, graph_instance
     html = visualizer.visualize_graph(graph_instance)
+    print(html)
     return HttpResponse(html)

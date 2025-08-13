@@ -77,52 +77,21 @@ class Graph(object):
         del self._vertices[vid]
         return True
 
-
-    
-    def _add_edge(self, id1: int, id2: int) -> None:
+    def _add_edge(self, id1: str, id2: str, **attrs) -> None:
         if id1 not in self._vertices or id2 not in self._vertices:
             return
 
         if id1 not in self._edges:
-            self._edges[id1] = []
+            self._edges[id1] = {}
         if id2 not in self._edges[id1]:
-            self._edges[id1].append(id2)
+            self._edges[id1][id2] = attrs
     
-    def edit_edge(self, old_source: str, new_target: str) -> None:
-        # See if both nodes exist
-        if old_source not in self._vertices or new_target not in self._vertices:
-            return "ERROR: One or both nodes do not exist."
-
-        # Make sure there is an edge or we won't have an edge to edit xd
-        if old_source not in self._edges or not self._edges[old_source]:
-            return "ERROR: That source node has no edges to edit."
-
-        # First we remove old edge.
-        old_target = self._edges[old_source][0]
-        if old_target in self._edges[old_source]:
-            self._edges[old_source].remove(old_target)
-
-        # If undirected, remove reverse connection safely
-        if not self._is_directed:
-            if old_target not in self._edges:
-                self._edges[old_target] = []
-            if old_source in self._edges[old_target]:
-                self._edges[old_target].remove(old_source)
-
-        # Then we Add new connection
-        if old_source not in self._edges:
-            self._edges[old_source] = []
-        if new_target not in self._edges[old_source]:
-            self._edges[old_source].append(new_target)
-
-        # If undirected, add reverse connection safely
-        if not self._is_directed:
-            if new_target not in self._edges:
-                self._edges[new_target] = []
-            if old_source not in self._edges[new_target]:
-                self._edges[new_target].append(old_source)
-
-        return f"Edge updated: {old_source} -> {new_target} (was {old_source} -> {old_target})"
+    def _edit_edge(self, id1: str, id2: str, **attrs) -> None:
+        if id1 not in self._edges:
+            return
+        if id2 not in self._edges[id1]:
+            return
+        self._edges[id1][id2] = attrs
 
     def delete_edge(self, node1_id: str, node2_id: str) -> bool:
        #If nodes ids are located in edges, we remove the edge from 1 node to another
@@ -134,11 +103,16 @@ class Graph(object):
             return True
         return False
 
-    def create_edge(self, id1: int, id2: int) -> None:
-        self._add_edge(id1, id2)
+    def create_edge(self, id1: str, id2: str, **attrs) -> None:
+        self._add_edge(id1, id2, **attrs)
         if not self._is_directed:
-            self._add_edge(id2, id1)
-        
+            self._add_edge(id2, id1, **attrs)
+
+    def edit_edge(self, id1: str, id2: str, **attrs) -> None:
+        self._edit_edge(id1, id2, **attrs)
+        if not self._is_directed:
+            self._edit_edge(id2, id1, **attrs)
+
 class GraphVisualizer(ABC):
     #Returns a string representing an HTML DOM visualization of the provided graph
     def visualize_graph(self, g: Graph)->str:

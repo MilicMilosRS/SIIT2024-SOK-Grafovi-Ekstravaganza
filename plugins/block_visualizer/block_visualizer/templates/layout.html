@@ -1,8 +1,37 @@
 <div class="full-screen">
-    <svg class="full-screen" id="main-view">
-    </svg>
+    <style>
+        #line_attrs{
+            position:absolute;
+            left: 30px;
+            bottom: 30px;
+            display: flex;
+            flex-direction: column;
+            background-color: #fad7a0;
+            border: black solid 1px;
+            visibility: hidden;
+            border-radius: 10px;
+            padding: 10px;
+        }
+
+        .container{
+            position: relative;
+        }
+        
+        p {
+            margin: 3px;
+        }
+
+    </style>
+
+    <div class="container full-screen">
+        <svg class="full-screen" id="main-view">
+        </svg>
+
+        <div id="line_attrs"></div>
+    </div>
+
     <script>
-    function renderMainView(nodeData, links)
+    function renderMainView(nodeData, links, isDirected)
     {
         const svg = d3.select("svg");
         const width = svg.node().getBoundingClientRect().width
@@ -12,12 +41,28 @@
 
         let simulation
 
+        
+        svg.append("defs").append("marker")
+            .attr("id", "arrow")
+            .attr("viewBox", "0 -5 10 10")
+            .attr("refX", 50)   // distance from end of line to place arrow
+            .attr("refY", 0)
+            .attr("markerWidth", 6)
+            .attr("markerHeight", 6)
+            .attr("orient", "auto")
+            .append("path")
+            .attr("d", "M0,-5L10,0L0,5")
+            .attr("fill", "black");
+
         const linkElements = svg.append("g")
             .selectAll(".link")
             .data(links)
-            .enter().append("line")
+            .enter().append("path")
+            .on("click", (event, d) => line_clicked(event, d))
             .attr("stroke", "black")
-            .attr("stroke-width", "3px");
+            .attr("stroke-width", "3px")
+            .attr("fill", "none")
+
 
         function nodeToHTML(node){
             let html = `<div style='padding:10px; border:1px solid black;text-align: center;background-color: orange; border-radius: 10px 10px 0px 0px;'>${node['id']}</div>`
@@ -72,19 +117,66 @@
             d3.selectAll("svg g").attr("transform", transform);
         }
 
-        
 
         // Function to update positions
         function ticked() {
+            linkElements.attr("d", d => {
+            // Find if the reverse link exists
+                const isReverse = links.some(l => 
+                    l.source.id === d.target.id && l.target.id === d.source.id
+                );
+
+                if (isReverse && d.source.id > d.target.id && isDirected) {
+                    // Draw a curve using an arc
+                    const dx = d.target.x - d.source.x;
+                    const dy = d.target.y - d.source.y;
+                    const dr = Math.sqrt(dx * dx + dy * dy) * 1.5; // curve radius
+                    return `M${d.source.x + d.source.width/2},${d.source.y + d.source.height/2}
+                            A${dr},${dr} 0 0,1 ${d.target.x + d.target.width/2},${d.target.y + d.target.height/2}`;
+                } else {
+                    // Straight line
+                    return `M${d.source.x + d.source.width/2},${d.source.y + d.source.height/2}
+                            L${d.target.x + d.target.width/2},${d.target.y + d.target.height/2}`;
+                }
+            });
+
+            if(isDirected)
             linkElements
-                .attr("x1", d => d.source.x + d.source.width/2)
-                .attr("y1", d => d.source.y + d.source.height/2)
-                .attr("x2", d => d.target.x + d.target.width/2)
-                .attr("y2", d => d.target.y + d.target.height/2);
+                .attr("marker-end", d => {
+                    // Compute distance from target node center to edge of rectangle
+                    const targetHalfWidth = d.target.width / 2;
+                    const targetHalfHeight = d.target.height / 2;
+                    const dx = d.target.x + targetHalfWidth - (d.source.x + d.source.width / 2);
+                    const dy = d.target.y + targetHalfHeight - (d.source.y + d.source.height / 2);
+                    const distance = Math.sqrt(dx*dx + dy*dy);
+
+                    // Adjust refX proportional to distance
+                    const markerId = `arrow-${d.target.id}`;
+                    // Create a unique marker if it doesn’t exist yet
+                    if (!document.getElementById(markerId)) {
+                        svg.append("defs").append("marker")
+                            .attr("id", markerId)
+                            .attr("viewBox", "0 -5 10 10")
+                            .attr("refX", targetHalfWidth) // <-- here, distance depends on node width
+                            .attr("refY", 0)
+                            .attr("markerWidth", 6)
+                            .attr("markerHeight", 6)
+                            .attr("orient", "auto")
+                            .append("path")
+                            .attr("d", "M0,-5L10,0L0,5")
+                            .attr("fill", "black");
+                    }
+                    return `url(#${markerId})`;
+                });
 
             svg.selectAll("foreignObject")
                 .attr("x", d => d.x)
                 .attr("y", d => d.y);
+        }
+
+        // Helper to check if reverse link exists
+        function hasReverseLink(link) {
+            return links.some(l => l.source.id === link.target.id && l.target.id === link.source.id);
         }
 
         function dragstarted(event) {
@@ -103,7 +195,16 @@
             event.subject.fx = null;
             event.subject.fy = null;
         }
+
+        function line_clicked(event, l) {
+            let d = document.getElementById("line_attrs")
+            d.innerHTML = ""
+            d.style.visibility = "visible"
+            for(let key in l.attrs){
+                d.innerHTML += `<p>${key}: ${l.attrs[key]}</p>`
+            }
+        }
     }
-    renderMainView(NODES, LINKS)
+    renderMainView(NODES, LINKS, IS_DIRECTED)
     </script>
 </div>
