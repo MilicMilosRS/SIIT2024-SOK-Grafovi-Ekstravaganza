@@ -21,6 +21,9 @@ class SimpleVisualizer(GraphVisualizer):
         
         return html.replace("NODES", json.dumps(parsedNodes)).replace("LINKS", json.dumps(parsedLinks))
     
+    def on_switched_to(self):
+        pass
+    
     def add_node(self, node: Node):
         pass
 

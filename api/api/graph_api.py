@@ -163,3 +163,7 @@ class GraphVisualizer(ABC):
     @abstractmethod
     def on_switched_from(self):
         pass
+
+    @abstractmethod
+    def on_switched_to(self):
+        pass

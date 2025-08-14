@@ -24,155 +24,206 @@
     </style>
 
     <div class="container full-screen">
-        <svg class="full-screen" id="main-view">
+        <svg class="full-screen" id="main-view-container">
         </svg>
 
         <div id="line_attrs"></div>
     </div>
 
     <script>
-    let nodes = NODES;
-    let links = LINKS;
-    let simulation;
-    let svg = d3.select("svg");
-    let linkElements = svg.append("g").selectAll(".link");
-    let nodeElements = svg.append("g").selectAll('foreignObject');
-    let isDirected = IS_DIRECTED; // default, backend can tell us later
+        // Top-level, single declaration
+        let nodes = NODES.slice(); // clone to allow mutation
+        let links = LINKS.slice();
+        let simulation;
+        let svg = d3.select("#main-view-container");
+        let container = svg.append("g");
+        let linkElements = container.append("g").selectAll(".link");
+        
+        let nodeElements = container.append("g").selectAll("foreignObject");
+        let isDirected = IS_DIRECTED;
+        console.log(isDirected)
 
-    function nodeToHTML(node){
-        let html = `<div style='padding:10px; border:1px solid black;text-align:center;background-color:orange; border-radius:10px 10px 0px 0px;'>${node.id}</div>`;
-        let attrHTML = Object.keys(node)
-            .filter(k => k !== "id")
-            .map(k => `<p style='white-space:nowrap'>${k}: ${node[k]}</p>`).join("<br/>");
-        html += `<div style='background-color:#fad7a0; border-radius:0px 0px 10px 10px; padding:10px; border:1px solid black;'>${attrHTML}</div>`;
-        return html;
-    }
-
-    function updateGraph() {
-        // NODES
-        nodeElements = nodeElements.data(nodes, d => d.id);
-        nodeElements.exit().remove();
-
-        // Enter + merge for foreignObject
-        let foEnter = nodeElements.enter()
-            .append('foreignObject')
-            .attr("width", 1)
-            .attr("height", 1)
-            .call(d3.drag().on("start", dragstarted).on("drag", dragged).on("end", dragended));
-
-        foEnter.append("xhtml:div")
-            .attr("style", "width:fit-content;")
-            .attr("nodeId", d => d.id)
-            .html(nodeToHTML);
-
-        // Measure sizes on the divs
-        foEnter.select("div").each(d => {
-            const div = document.querySelector(`div[nodeId='${d.id}']`);
-            d.width = div.offsetWidth;
-            d.height = div.offsetHeight;
-
-            // initial position for simulation
-            d.x = Math.random() * 500 + 50;
-            d.y = Math.random() * 500 + 50;
-        });
-
-        // Merge the <foreignObject> selection
-        nodeElements = foEnter.merge(nodeElements);
-
-        // Update sizes on <foreignObject>
-        nodeElements.attr("width", d => d.width)
-                    .attr("height", d => d.height);
-
-        // LINKS
-        linkElements = linkElements.data(links, d => d.source.id + "-" + d.target.id);
-        linkElements.exit().remove();
-        linkElements = linkElements.enter()
+        // Arrowhead marker
+        svg.append("defs").append("marker")
+            .attr("id", "arrowhead")
+            .attr("viewBox", "0 -5 10 10") // marker coordinate system
+            .attr("refX", 15) // position of arrow tip relative to end of line
+            .attr("refY", 0)
+            .attr("markerWidth", 6)
+            .attr("markerHeight", 6)
+            .attr("orient", "auto")
             .append("path")
-            .attr("stroke", "black")
-            .attr("stroke-width", "3px")
-            .attr("fill", "none")
-            .on("click", (event, d) => line_clicked(event, d))
-            .merge(linkElements);
+            .attr("d", "M0,-5L10,0L0,5") // triangle
+            .attr("fill", "black");
 
-        // Start/restart simulation
-        if (!simulation) {
-            simulation = d3.forceSimulation(nodes)
-                .force("link", d3.forceLink().id(d => d.id).links(links).strength(0.02))
-                .force("charge", d3.forceManyBody().strength(-250))
-                .force("collide", d3.forceCollide().radius(d => Math.max(d.width, d.height) / 2).iterations(10))
-                .on("tick", ticked);
+        // Zoom behavior
+        svg.call(d3.zoom()
+            .scaleExtent([0.1, 5])
+            .on("zoom", (event) => container.attr("transform", event.transform))
+        );
+
+        function nodeToHTML(node){
+            let html = `<div style='padding:10px; border:1px solid black;text-align:center;background-color:orange; border-radius:10px 10px 0px 0px;'>${node.id}</div>`;
+            let attrHTML = Object.keys(node)
+                .filter(k => k !== "id")
+                .map(k => `<p style='white-space:nowrap'>${k}: ${node[k]}</p>`).join("<br/>");
+            html += `<div style='background-color:#fad7a0; border-radius:0px 0px 10px 10px; padding:10px; border:1px solid black;'>${attrHTML}</div>`;
+            return html;
         }
-        simulation.nodes(nodes);
-        simulation.force("link").links(links);
-        simulation.alpha(1).restart();
-    }
 
-    function addNode(node) {
-        if (!nodes.find(n => n.id === node.id)) {
-            nodes.push(node);
+        function updateGraph() {
+            // LINKS
+            linkElements = linkElements.data(links, d => d.source.id + "-" + d.target.id);
+            linkElements.exit().remove();
+            linkElements = linkElements.enter()
+                .append("path")
+                .attr("stroke", "black")
+                .attr("stroke-width", "3px")
+                .attr("fill", "none")
+                .attr("marker-end", isDirected ? "url(#arrowhead)" : null) // <-- add this
+                .on("click", (event, d) => line_clicked(event, d))
+                .merge(linkElements)
+                .attr("marker-end", isDirected ? "url(#arrowhead)" : null); // <-- also update existing ones
+
+            // NODES
+            nodeElements = nodeElements.data(nodes, d => d.id);
+            nodeElements.exit().remove();
+            let foEnter = nodeElements.enter()
+                .append("foreignObject")
+                .attr("width", 1)
+                .attr("height", 1)
+                .call(d3.drag()
+                    .on("start", dragstarted)
+                    .on("drag", dragged)
+                    .on("end", dragended)
+                );
+
+            foEnter.append("xhtml:div")
+                .attr("style", "width:fit-content;")
+                .attr("nodeId", d => d.id)
+                .html(nodeToHTML);
+
+            // Measure new nodes
+            foEnter.select("div").each(function(d){
+                const div = this;
+                d.width = div.offsetWidth;
+                d.height = div.offsetHeight;
+                if (d.x === undefined) d.x = Math.random() * 500 + 50;
+                if (d.y === undefined) d.y = Math.random() * 500 + 50;
+            });
+
+            nodeElements = foEnter.merge(nodeElements);
+            nodeElements.attr("width", d => d.width)
+                        .attr("height", d => d.height);
+
+            // Simulation
+            if (!simulation) {
+                simulation = d3.forceSimulation(nodes)
+                    .force("link", d3.forceLink().id(d => d.id).links(links).strength(0.02))
+                    .force("charge", d3.forceManyBody().strength(-1500))
+                    .force("collide", d3.forceCollide().radius(d => Math.max(d.width, d.height)/2).iterations(10))
+                    .on("tick", ticked);
+            } else {
+                simulation.nodes(nodes);
+                simulation.force("link").links(links);
+                simulation.alpha(1).restart();
+            }
+        }
+
+        function hasReverseLink(link) {
+            return links.some(l => l.source.id === link.target.id && l.target.id === link.source.id);
+        }
+
+        function addNode(node) {
+            console.log("Adding node")
+            if (!nodes.find(n => n.id === node.id)) {
+                nodes.push(node);
+                updateGraph();
+            }
+        }
+
+        function removeNode(id) {
+            nodes = nodes.filter(n => n.id !== id);
+            links = links.filter(l => l.source.id !== id && l.target.id !== id);
             updateGraph();
         }
-    }
 
-    function removeNode(id) {
-        nodes = nodes.filter(n => n.id !== id);
-        links = links.filter(l => l.source.id !== id && l.target.id !== id);
-        updateGraph();
-    }
+        function addLink(sourceId, targetId, attrs) {
+            let s = nodes.find(n => n.id === sourceId);
+            let t = nodes.find(n => n.id === targetId);
+            if (s && t && !links.find(l => l.source.id === sourceId && l.target.id === targetId)) {
+                links.push({source: s, target: t, attrs: attrs || {}});
+                updateGraph();
+            }
+        }
 
-    function addLink(sourceId, targetId, attrs) {
-        let s = nodes.find(n => n.id === sourceId);
-        let t = nodes.find(n => n.id === targetId);
-        if (s && t && !links.find(l => l.source.id === sourceId && l.target.id === targetId)) {
-            links.push({source: s, target: t, attrs: attrs || {}});
+        function removeLink(sourceId, targetId) {
+            links = links.filter(l => !(l.source.id === sourceId && l.target.id === targetId));
             updateGraph();
         }
-    }
 
-    function removeLink(sourceId, targetId) {
-        links = links.filter(l => !(l.source.id === sourceId && l.target.id === targetId));
-        updateGraph();
-    }
-
-    function ticked() {
-        linkElements.attr("d", d => `M${d.source.x + d.source.width/2},${d.source.y + d.source.height/2} L${d.target.x + d.target.width/2},${d.target.y + d.target.height/2}`);
-        nodeElements.attr("x", d => d.x).attr("y", d => d.y);
-    }
-
-    function dragstarted(event) {
-        if (!event.active) simulation.alphaTarget(0.3).restart();
-        event.subject.fx = event.subject.x;
-        event.subject.fy = event.subject.y;
-    }
-    function dragged(event) {
-        event.subject.fx = event.x;
-        event.subject.fy = event.y;
-    }
-    function dragended(event) {
-        if (!event.active) simulation.alphaTarget(0);
-        event.subject.fx = null;
-        event.subject.fy = null;
-    }
-    function line_clicked(event, l) {
-        let d = document.getElementById("line_attrs");
-        d.innerHTML = "";
-        d.style.visibility = "visible";
-        for (let key in l.attrs) {
-            d.innerHTML += `<p>${key}: ${l.attrs[key]}</p>`;
+        function endpointOnNodePerimeter(source, target) {
+            const dx = target.x - source.x;
+            const dy = target.y - source.y;
+            const angle = Math.atan2(dy, dx);
+            return {
+                x: target.x + target.width/2  - Math.cos(angle) * (target.width/2),
+                y: target.y + target.height/2 - Math.sin(angle) * (target.height/2)
+            };
         }
-    }
 
-    //WebSocket listener for backend updates
-    let socket = new WebSocket("ws://localhost:8765");
-    socket.onmessage = (event) => {
-        let msg = JSON.parse(event.data);
-        if (msg.action === "addNode") addNode(msg.node);
-        if (msg.action === "removeNode") removeNode(msg.id);
-        if (msg.action === "addLink") addLink(msg.source, msg.target, msg.attrs);
-        if (msg.action === "removeLink") removeLink(msg.source, msg.target);
-        if (msg.action === "setDirected") isDirected = msg.value;
-    };
+        function ticked() {
+            linkElements.attr("d", d => {
+                const isReverse = links.some(l =>
+                    l.source.id === d.target.id && l.target.id === d.source.id
+                );
 
-    updateGraph();
+                // Compute adjusted end point
+                const end = endpointOnNodePerimeter(d.source, d.target);
+                const start = {
+                    x: d.source.x + d.source.width/2,
+                    y: d.source.y + d.source.height/2
+                };
+
+                if (isReverse && d.source.id > d.target.id && isDirected) {
+                    const dx = end.x - start.x;
+                    const dy = end.y - start.y;
+                    const dr = Math.sqrt(dx*dx + dy*dy) * 1.5;
+                    return `M${start.x},${start.y} A${dr},${dr} 0 0,1 ${end.x},${end.y}`;
+                } else {
+                    return `M${start.x},${start.y} L${end.x},${end.y}`;
+                }
+            });
+
+            nodeElements.attr("x", d => d.x).attr("y", d => d.y);
+        }
+
+        // Drag helpers
+        function dragstarted(event) { if (!event.active) simulation.alphaTarget(0.3).restart(); event.subject.fx = event.subject.x; event.subject.fy = event.subject.y; }
+        function dragged(event) { event.subject.fx = event.x; event.subject.fy = event.y; }
+        function dragended(event) { if (!event.active) simulation.alphaTarget(0); event.subject.fx = null; event.subject.fy = null; }
+
+        function line_clicked(event, l) {
+            let d = document.getElementById("line_attrs");
+            d.innerHTML = "";
+            d.style.visibility = "visible";
+            for (let key in l.attrs) d.innerHTML += `<p>${key}: ${l.attrs[key]}</p>`;
+        }
+
+        // WebSocket updates
+        let socket = new WebSocket("ws://localhost:8765");
+        socket.onopen = () => console.log("Websocket connected")
+        socket.onerror = () => console.log("Error connecting websocket")
+        socket.onmessage = (event) => {
+            console.log("On message")
+            let msg = JSON.parse(event.data);
+            if (msg.action === "addNode") addNode(msg.node);
+            if (msg.action === "removeNode") removeNode(msg.id);
+            if (msg.action === "addLink") addLink(msg.source, msg.target, msg.attrs);
+            if (msg.action === "removeLink") removeLink(msg.source, msg.target);
+            if (msg.action === "setDirected") isDirected = msg.value;
+        };
+
+        updateGraph();
     </script>
 </div>

@@ -38,7 +38,10 @@ class Platform():
 
     #Visualizer stuff
     def set_visualizer(self, visualizer: GraphVisualizer) -> None:
+        if self.visualizer is not None:
+            self.visualizer.on_switched_from()
         self.visualizer = visualizer
+        self.visualizer.on_switched_to()
 
     def generate_main_view(self) -> str:
         return self.visualizer.visualize_graph(self.graph)

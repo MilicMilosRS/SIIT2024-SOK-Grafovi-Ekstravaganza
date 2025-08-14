@@ -10,6 +10,8 @@ class BlockVisualizer(GraphVisualizer):
         self.clients = set()
         self.loop = None
         self.server = None
+
+    def on_switched_to(self):
         self.thread = threading.Thread(target=self._start_background_server, daemon=True)
         self.thread.start()
 
@@ -23,10 +25,12 @@ class BlockVisualizer(GraphVisualizer):
 
         loop.run_until_complete(start())  # start the server
         loop.run_forever()  
+        print("Server running")
 
     def on_switched_from(self):
+        print("Switched from")
         if self.loop and self.server:
-            asyncio.run_coroutine_threadsafe(self._shutdown_server(), self.loop)
+            asyncio.run_coroutine_threadsafe(self._shutdown_server(), self.loop).result()
 
     async def _shutdown_server(self):
         print("Shutting down server...")
@@ -50,7 +54,7 @@ class BlockVisualizer(GraphVisualizer):
     async def _send_update_async(self, update: dict):
         if self.clients:
             msg = json.dumps(update)
-            await asyncio.wait([client.send(msg) for client in self.clients])
+            await asyncio.gather(*(client.send(msg) for client in self.clients))
 
     def visualize_graph(self, g: Graph) -> str:
         parsedNodes = []
@@ -69,21 +73,22 @@ class BlockVisualizer(GraphVisualizer):
         return html.replace("NODES", json.dumps(parsedNodes)).replace("LINKS", json.dumps(parsedLinks)).replace("IS_DIRECTED", "true" if g._is_directed else "false")
 
     def add_node(self, node: Node):
+        print("adding node")
         self._send_update({
             "action": "addNode",
-            "node": {"id": node.id, **node._attributes}
+            "node": {"id": node.get_id(), **node._attributes}
         })
 
     def edit_node(self, node: Node):
         self._send_update({
             "action": "editNode",
-            "node": {"id": node.id, **node._attributes}
+            "node": {"id": node.get_id(), **node._attributes}
         })
 
     def remove_node(self, node: Node):
         self._send_update({
             "action": "removeNode",
-            "id": node.id
+            "id": node.get_id()
         })
 
     def add_link(self, id_source: str, id_target: str, **attrs):
