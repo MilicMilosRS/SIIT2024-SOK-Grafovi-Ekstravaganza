@@ -79,7 +79,7 @@ class Graph(object):
 
 
     
-    def _add_edge(self, id1: int, id2: int) -> None:
+    def _add_edge(self, id1: str, id2: str) -> None:
         if id1 not in self._vertices or id2 not in self._vertices:
             return
 
@@ -134,12 +134,37 @@ class Graph(object):
             return True
         return False
 
-    def create_edge(self, id1: int, id2: int) -> None:
+    def create_edge(self, id1: str, id2: str) -> None:
         self._add_edge(id1, id2)
         if not self._is_directed:
             self._add_edge(id2, id1)
         
 class GraphVisualizer(ABC):
     #Returns a string representing an HTML DOM visualization of the provided graph
+    @abstractmethod
     def visualize_graph(self, g: Graph)->str:
+        pass
+
+    @abstractmethod
+    def add_node(self, node: Node):
+        pass
+
+    @abstractmethod
+    def edit_node(self, node: Node):
+        pass
+
+    @abstractmethod
+    def remove_node(self, node: Node):
+        pass
+
+    @abstractmethod
+    def add_link(self, id_source: str, id_target: str, **attrs):
+        pass
+
+    @abstractmethod
+    def edit_link(self, id_source: str, id_target: str, **attrs):
+        pass
+
+    @abstractmethod
+    def remove_link(self, id_source: str, id_target: str, **attrs):
         pass
