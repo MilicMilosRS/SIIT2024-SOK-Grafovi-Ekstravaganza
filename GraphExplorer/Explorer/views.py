@@ -6,26 +6,28 @@ from django.http import JsonResponse, HttpResponse
 import json
 from django.views.decorators.csrf import csrf_exempt
 from .management.commands import cli
-from graph_api import Graph
+from graph_api import Node, Graph, GraphVisualizer
 
-# --- Initialize once at import time ---
-filepath = "../large_graph.json"
-js = JSONDataSource(filepath)
-js.parse_json()
-graph_instance = js.convert_to_api_graph()
+graph_instance = Graph(True)
+graph_instance.add_vertex(Node("gas1"))
+graph_instance.add_vertex(Node("gas2"))
+graph_instance.create_edge("gas1", "gas2", **{"attr1": "gas", "attr2": 13})
+graph_instance.create_edge("gas2", "gas1", **{"attr1": "drugi gas", "attr2": 13})
 
-cli_instance = cli.CommandLine(graph_instance, filepath)
+cli_instance = cli.CommandLine(graph_instance)
 visualizer = BlockVisualizer()
 
 def HomePage(request):
-    global visualizer
+    global graph_instance
 
     style = request.GET.get("style", "simple")
+
     if style == "block":
         visualizer = BlockVisualizer()
     else:
         visualizer = SimpleVisualizer()
 
+    context = {"main_view": visualizer.visualize_graph(graph_instance)}
     context = {"main_view": visualizer.visualize_graph(graph_instance)}
     return render(request, 'index.html', context)
 
@@ -46,4 +48,5 @@ def run_command(request):
 @csrf_exempt
 def partial_graph_view(request):
     html = visualizer.visualize_graph(graph_instance)
+    print(html)
     return HttpResponse(html)

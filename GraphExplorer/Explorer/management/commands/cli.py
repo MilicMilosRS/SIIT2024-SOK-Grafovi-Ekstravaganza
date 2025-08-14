@@ -63,7 +63,7 @@ class CommandLine():
             if parsed["id"] in self.graph._edges:
                 return ("ERROR: That edge already exists")
             node1_id,node2_id = parsed["extra"][:2]
-            self.graph.create_edge(node1_id,node2_id)
+            self.graph.create_edge(node1_id,node2_id, **parsed["properties"])
             return f"Edge created successfully (id={parsed['id']}) {node1_id} -> {node2_id} with props {parsed['properties']}"
         else:
             return ("ERROR: Invalid create command.")
