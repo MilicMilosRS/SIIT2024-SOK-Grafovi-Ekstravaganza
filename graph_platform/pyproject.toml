@@ -3,7 +3,7 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "platform"
+name = "graph_platform"
 version = "0.1.1"
 description = "Platform for manipulating graph data and communication between plugins"
 authors = [
@@ -15,4 +15,4 @@ license = { text = "MIT" }
 dependencies = ["graph-api"]
 
 [tool.setuptools.packages.find]
-where = ["api"]
+where = ["platform"]

@@ -60,7 +60,6 @@ class BlockVisualizer(GraphVisualizer):
         parsedLinks = []
         for source, targets in g._edges.items():
             for target in targets:
-                print(g._edges[source][target])
                 parsedLinks.append({"source": source, "target": target, "attrs": g._edges[source][target]})
 
         template_path = os.path.join(os.path.dirname(__file__))

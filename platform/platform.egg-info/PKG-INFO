@@ -1,5 +1,0 @@
-Metadata-Version: 2.1
-Name: platform
-Version: 0.1.0
-Summary: The platform library handles all graph manipulation logic and communicates with plug-ins that implement the API library
-Requires-Dist: api@ file://../api
