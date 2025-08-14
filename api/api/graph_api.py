@@ -156,5 +156,10 @@ class GraphVisualizer(ABC):
         pass
 
     @abstractmethod
-    def remove_link(self, id_source: str, id_target: str, **attrs):
+    def remove_link(self, id_source: str, id_target: str):
+        pass
+
+    #When the visualizer being used is switched from this to something else
+    @abstractmethod
+    def on_switched_from(self):
         pass
