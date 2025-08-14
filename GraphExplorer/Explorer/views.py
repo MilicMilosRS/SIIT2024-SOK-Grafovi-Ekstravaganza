@@ -11,14 +11,14 @@ from graph_platform import Platform
 
 # --- Initialize once at import time ---
 filepath = "../large_graph.json"
-js = JSONDataSource(filepath)
-js.parse_json()
-graph_instance = js.convert_to_api_graph()
+# js = JSONDataSource(filepath)
+# js.parse_json()
+# graph_instance = js.convert_to_api_graph()
 
 # cli_instance = cli.CommandLine(graph_instance, filepath)
 # visualizer = BlockVisualizer()
 
-platform = Platform(graph_instance, SimpleVisualizer())
+platform = Platform(Graph(False), SimpleVisualizer())
 cli_instance = cli.CommandLine(platform, filepath)
 
 def HomePage(request):
