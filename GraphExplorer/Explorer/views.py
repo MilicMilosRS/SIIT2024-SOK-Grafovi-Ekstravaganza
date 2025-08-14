@@ -6,29 +6,35 @@ from django.http import JsonResponse, HttpResponse
 import json
 from django.views.decorators.csrf import csrf_exempt
 from .management.commands import cli
-from graph_api import Node, Graph, GraphVisualizer
+from graph_api import Graph
+from graph_platform import Platform
 
-graph_instance = Graph(True)
-graph_instance.add_vertex(Node("gas1"))
-graph_instance.add_vertex(Node("gas2"))
-graph_instance.create_edge("gas1", "gas2", **{"attr1": "gas", "attr2": 13})
-graph_instance.create_edge("gas2", "gas1", **{"attr1": "drugi gas", "attr2": 13})
+# --- Initialize once at import time ---
+filepath = "../large_graph.json"
+js = JSONDataSource(filepath)
+js.parse_json()
+graph_instance = js.convert_to_api_graph()
 
-cli_instance = cli.CommandLine(graph_instance)
-visualizer = BlockVisualizer()
+# cli_instance = cli.CommandLine(graph_instance, filepath)
+# visualizer = BlockVisualizer()
+
+platform = Platform(graph_instance, SimpleVisualizer())
+cli_instance = cli.CommandLine(platform, filepath)
 
 def HomePage(request):
-    global graph_instance
+    global platform
 
     style = request.GET.get("style", "simple")
 
     if style == "block":
-        visualizer = BlockVisualizer()
+        platform.set_visualizer(BlockVisualizer())
     else:
-        visualizer = SimpleVisualizer()
+        platform.set_visualizer(SimpleVisualizer())
 
-    context = {"main_view": visualizer.visualize_graph(graph_instance)}
-    context = {"main_view": visualizer.visualize_graph(graph_instance)}
+    for node in platform.graph._vertices.keys():
+            print(node)
+
+    context = {"main_view": platform.generate_main_view()}
     return render(request, 'index.html', context)
 
 @csrf_exempt
@@ -47,6 +53,5 @@ def run_command(request):
 
 @csrf_exempt
 def partial_graph_view(request):
-    html = visualizer.visualize_graph(graph_instance)
-    print(html)
+    html = platform.generate_main_view()
     return HttpResponse(html)

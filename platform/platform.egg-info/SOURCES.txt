@@ -1,8 +1,0 @@
-setup.py
-platform/__init__.py
-platform/platform.py
-platform.egg-info/PKG-INFO
-platform.egg-info/SOURCES.txt
-platform.egg-info/dependency_links.txt
-platform.egg-info/requires.txt
-platform.egg-info/top_level.txt

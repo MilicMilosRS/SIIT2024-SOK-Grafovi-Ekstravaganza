@@ -40,7 +40,7 @@ class JSONDataSource:
 
         node_mapping = {}
         for node_id, data in self.graph.nodes(data=True):
-            node = Node(id=len(node_mapping) + 1)
+            node = Node(id=str(len(node_mapping) + 1))
             for key, value in data.items():
                 node.set_attribute(key, value)
             node_mapping[node_id] = node
@@ -50,4 +50,5 @@ class JSONDataSource:
             if source in node_mapping and target in node_mapping:
                 api_graph.create_edge(node_mapping[source].get_id(), node_mapping[target].get_id())
 
+        
         return api_graph
