@@ -112,8 +112,49 @@ class Graph(object):
         self._edit_edge(id1, id2, **attrs)
         if not self._is_directed:
             self._edit_edge(id2, id1, **attrs)
-
+    
+    def to_json_dict_hierarchy(self):
+        data = {"community": {"members": []}}
+        for node_id, node in self._vertices.items():
+            attrs = node.get_attributes()
+            if attrs.get("type") == "member":
+                member_dict = {k: v for k, v in attrs.items() if k != "id"}
+                # find friends
+                friends = []
+                for target_id in self._edges.get(node_id, []):
+                    friend_node = self._vertices[target_id]
+                    friend_attrs = friend_node.get_attributes()
+                    friends.append({k: v for k, v in friend_attrs.items() if k != "id"})
+                member_dict["friends"] = friends
+                data["community"]["members"].append(member_dict)
+        
+        return data
 class GraphVisualizer(ABC):
     #Returns a string representing an HTML DOM visualization of the provided graph
+    @abstractmethod
     def visualize_graph(self, g: Graph)->str:
+        pass
+
+    @abstractmethod
+    def add_node(self, node: Node):
+        pass
+
+    @abstractmethod
+    def edit_node(self, node: Node):
+        pass
+
+    @abstractmethod
+    def remove_node(self, node: Node):
+        pass
+
+    @abstractmethod
+    def add_link(self, id_source: str, id_target: str, **attrs):
+        pass
+
+    @abstractmethod
+    def edit_link(self, id_source: str, id_target: str, **attrs):
+        pass
+
+    @abstractmethod
+    def remove_link(self, id_source: str, id_target: str, **attrs):
         pass

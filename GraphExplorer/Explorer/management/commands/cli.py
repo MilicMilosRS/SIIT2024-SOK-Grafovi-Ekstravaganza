@@ -1,11 +1,13 @@
+import json
 from django.core.management.base import BaseCommand, CommandError
 import shlex
 
 from graph_api import Graph, Node
  
 class CommandLine():
-    def __init__(self, graph: Graph):
+    def __init__(self, graph: Graph, file_path: str = None):
         self.graph = graph
+        self.file_path = file_path
         pass
     def handle_create(self, arg):
         parsed = self.parse_cli_args(arg)
@@ -42,6 +44,8 @@ class CommandLine():
             return self.handle_search(tokens[1:])
         elif cmd == "clear":
             return self.handle_clear(tokens[1:])
+        elif cmd == "save-graph":
+            return self.handle_save(tokens[1:])
         else:
             return (f"WARNING: Unknown command: {cmd}")
 
@@ -118,6 +122,14 @@ class CommandLine():
 
     def handle_clear(self,arg):
         pass
+
+    def handle_save(self, args=None):
+        try:
+            with open(self.file_path, "w") as f:
+                json.dump(self.graph.to_json_dict_hierarchy(), f, indent=2)
+            return f"Graph saved successfully to {self.file_path}."
+        except Exception as e:
+            return f"ERROR: Failed to save graph. {str(e)}"
 
     def parse_cli_args(self, args):
         """

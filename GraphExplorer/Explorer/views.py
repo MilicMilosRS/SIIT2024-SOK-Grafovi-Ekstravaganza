@@ -2,8 +2,7 @@ from django.shortcuts import render
 from block_visualizer import BlockVisualizer
 from data_source_json import JSONDataSource
 from simple_visualizer import SimpleVisualizer
-from django.http import JsonResponse
-from django.http import HttpResponse
+from django.http import JsonResponse, HttpResponse
 import json
 from django.views.decorators.csrf import csrf_exempt
 from .management.commands import cli
@@ -29,9 +28,8 @@ def HomePage(request):
         visualizer = SimpleVisualizer()
 
     context = {"main_view": visualizer.visualize_graph(graph_instance)}
+    context = {"main_view": visualizer.visualize_graph(graph_instance)}
     return render(request, 'index.html', context)
-
-
 
 @csrf_exempt
 def run_command(request):
@@ -49,7 +47,6 @@ def run_command(request):
 
 @csrf_exempt
 def partial_graph_view(request):
-    global visualizer, graph_instance
     html = visualizer.visualize_graph(graph_instance)
     print(html)
     return HttpResponse(html)
