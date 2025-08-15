@@ -1,13 +1,14 @@
+import time
 from django.shortcuts import render
 from block_visualizer import BlockVisualizer
 from data_source_json import JSONDataSource
 from simple_visualizer import SimpleVisualizer
-from django.http import JsonResponse, HttpResponse
+from django.http import JsonResponse, HttpResponse, StreamingHttpResponse
 import json
 from django.views.decorators.csrf import csrf_exempt
 from .management.commands import cli
-from graph_api import Graph
-from graph_platform import Platform
+from graph_api import Graph, Node
+from graph_platform import Platform, TreeNode, ForestView
 
 # --- Initialize once at import time ---
 filepath = "../large_graph.json"
@@ -23,6 +24,7 @@ cli_instance = cli.CommandLine(platform, filepath)
 
 def HomePage(request):
     global platform
+    platform.attach_update_listener(notify_graph_update)
 
     style = request.GET.get("style", "simple")
 
@@ -30,9 +32,6 @@ def HomePage(request):
         platform.set_visualizer(BlockVisualizer())
     else:
         platform.set_visualizer(SimpleVisualizer())
-
-    for node in platform.graph._vertices.keys():
-            print(node)
 
     context = {"main_view": platform.generate_main_view()}
     return render(request, 'index.html', context)
@@ -55,3 +54,56 @@ def run_command(request):
 def partial_graph_view(request):
     html = platform.generate_main_view()
     return HttpResponse(html)
+
+#TreeView stuff
+
+#list of callbacks for SSE
+_graph_update_listeners = []
+
+def notify_graph_update():
+    data = json.dumps(platform.get_tree_view())
+    for callback in _graph_update_listeners:
+        callback(data)
+
+#reloads the treeview when the graph is updated
+def sse_treeview_updates(request):
+    def event_stream():
+        last_data = None
+
+        # Define a callback to push updates
+        data_queue = []
+
+        def listener(new_data):
+            data_queue.append(new_data)
+
+        _graph_update_listeners.append(listener)
+
+        try:
+            initial_data = json.dumps(platform.get_tree_view())
+            yield f"data: {initial_data}\n\n"
+            
+            while True:
+                if data_queue:
+                    # pop the latest update
+                    data = data_queue.pop(0)
+                    yield f"data: {data}\n\n"
+                else:
+                    time.sleep(0.5)  # small sleep to avoid busy loop
+        finally:
+            _graph_update_listeners.remove(listener)
+
+    return StreamingHttpResponse(event_stream(), content_type='text/event-stream')
+
+@csrf_exempt
+def expand_treeview_node(request):
+    if request.method == "POST":
+        try:
+            data = json.loads(request.body)
+            id = data.get("tree_id", "")
+        except Exception:
+            return JsonResponse({"output": "Invalid request"}, status=400)
+
+        platform.expand_tree_view(id)
+        return JsonResponse({}, status=200)
+
+    return JsonResponse({"output": "Invalid method"}, status=405)

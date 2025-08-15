@@ -1,0 +1,151 @@
+<div style="width: 100%; height: 100%;">
+    <style>
+        .treenode-outer-container {
+            list-style-type: none;
+            padding-left: 20px;
+        }
+
+        .treenode-container {
+            box-sizing: border-box;
+            margin: 2px 0;
+            cursor: pointer;
+            width: fit-content;
+            background-color: white;
+            border: solid black 2px;
+            border-radius: 10px;
+            padding-left: 10px;
+            padding-right: 10px;
+        }
+
+        .attribute-container {
+            display: flex;
+            flex-direction: column;
+            justify-content: stretch;
+            width: fit-content;
+        }
+
+        .attribute-container > .treenode-container {
+            width: 100%;
+        }
+
+        .collapsed + .treenode-outer-container {
+            display: none;
+        }
+
+        .node-label {
+            padding: 2px 4px;
+            border-radius: 3px;
+            display: inline-block;
+        }
+
+        .node-label:hover {
+            background-color: #e0e0e0;
+        }
+
+        .toggle-btn { 
+            margin-right: 4px;
+            cursor:pointer;
+            width: 20px;
+        }
+
+        #tree-container{
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            max-height: 100%;
+            overflow: auto;
+        }
+
+        #tree-container > div {
+            flex-shrink: 0;
+            white-space: nowrap;
+        }
+    </style>
+
+    <div id="tree-container"></div>
+
+    <script>
+        let forestData;
+
+        function createTreeNode(node) {
+            const outerest_div = document.createElement('div')
+
+            const treenode_div = document.createElement('div');
+            treenode_div.classList.add("treenode-container")
+
+            const attributes_div = document.createElement('div')
+            attributes_div.classList.add("attribute-container")
+
+            const outer_div = document.createElement('div');
+            outer_div.classList.add("treenode-outer-container");
+
+            outerest_div.appendChild(treenode_div)
+            outerest_div.appendChild(outer_div)
+            outer_div.appendChild(attributes_div)
+
+            const label = document.createElement('span');
+            label.textContent = `${node.node_id} (${node.tree_id})`;
+            label.className = 'node-label';
+
+            treenode_div.appendChild(label);
+
+            // Create toggle button
+            const btn = document.createElement('button');
+            btn.className = 'toggle-btn';
+            btn.textContent = node.is_expanded ? '-' : '+';
+            treenode_div.insertBefore(btn, label);
+
+            //Add attributes
+            for(const key in node.attributes){
+                const treenode_div = document.createElement('div');
+                treenode_div.classList.add("treenode-container")
+                
+                const lbl = document.createElement('span');
+                lbl.textContent = `${key}: ${node.attributes[key]}`
+                lbl.className = 'node-label';
+                
+                treenode_div.appendChild(lbl)
+                attributes_div.appendChild(treenode_div)
+            }
+
+            // Add children
+            node.children.forEach(child => outer_div.appendChild(createTreeNode(child)));
+
+            if (!node.is_expanded) treenode_div.classList.add('collapsed');
+
+            // Toggle expand/collapse on button click
+            btn.addEventListener('click', e => {
+                if(treenode_div.classList.contains('collapsed'))
+                    fetch('/treeview/expand', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    body: JSON.stringify({ tree_id: node.tree_id })
+                })
+
+                treenode_div.classList.toggle('collapsed');
+                btn.textContent = treenode_div.classList.contains('collapsed') ? '+' : '-';
+                e.stopPropagation(); // Prevent parent toggle
+            });
+
+            return outerest_div;
+        }
+
+        function renderForest(forest) {
+            const container = document.getElementById('tree-container');
+            forest.forEach(root => container.appendChild(createTreeNode(root)));
+        }
+
+        const evtSource = new EventSource("/treeview/updates");
+        evtSource.onmessage = function(event) {
+            forestData = JSON.parse(event.data);
+            let container = document.getElementById('tree-container');
+            container.innerHTML = ''; // clear old tree
+            renderForest(forestData);
+            console.log(event.data);
+        };
+    </script>
+</div>
