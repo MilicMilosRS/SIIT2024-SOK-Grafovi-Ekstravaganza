@@ -33,6 +33,8 @@ class Node(object):
 class Graph(object):
     def __init__(self, directed: bool) -> None:
         self._vertices = {}
+        #Dict of dicts
+        #Example: node1_id: {node2_id: {EDGE ATTRIBUTES}, node3_id: {EDGE ATTRIBUTES}}
         self._edges = {}
         self._is_directed = directed
 
@@ -71,7 +73,7 @@ class Graph(object):
         # Remove edge from other edges adjacent
         for src, targets in self._edges.items():
             if vid in targets:
-                targets.remove(vid)
+                del targets[vid]
 
         # And then remove edge itself
         del self._vertices[vid]
@@ -96,10 +98,10 @@ class Graph(object):
     def delete_edge(self, node1_id: str, node2_id: str) -> bool:
        #If nodes ids are located in edges, we remove the edge from 1 node to another
         if node1_id in self._edges and node2_id in self._edges[node1_id]:
-            self._edges[node1_id].remove(node2_id)
+            del self._edges[node1_id][node2_id]
             # If undirected, remove reverse link too
             if not self._is_directed and node2_id in self._edges and node1_id in self._edges[node2_id]:
-                self._edges[node2_id].remove(node1_id)
+                del self._edges[node2_id][node1_id]
             return True
         return False
 
@@ -127,8 +129,28 @@ class Graph(object):
                     friends.append({k: v for k, v in friend_attrs.items() if k != "id"})
                 member_dict["friends"] = friends
                 data["community"]["members"].append(member_dict)
-        
         return data
+    
+    #Returns a tuple.
+    #First element is outgoing connections.
+    #Second element is incoming connections.
+    def get_connected_nodes(self, node_id: str):
+        outgoing = []
+        incoming = []
+
+        #Loop through outgoing connections and take the nodes
+        if node_id in self._edges:
+            for outgoing_node_id in self._edges[node_id].keys():
+                outgoing.append(self._vertices[outgoing_node_id])
+
+        #Loop through all connections and take the incoming nodes
+        for src_id in self._edges.keys():
+            for trgt_id in self._edges[src_id].keys():
+                if trgt_id == node_id:
+                    incoming.append(self._vertices[src_id])
+        
+        return (outgoing, incoming)
+
 class GraphVisualizer(ABC):
     #Returns a string representing an HTML DOM visualization of the provided graph
     @abstractmethod
