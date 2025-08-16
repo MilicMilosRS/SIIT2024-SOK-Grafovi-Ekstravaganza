@@ -79,12 +79,15 @@ class CommandLine():
                 return f"Node {node_id} deleted successfully."
             else:
                 return f"ERROR: Node {node_id} doesn't exist."
+
         elif parsed["type"] == "edge":
             node1_id, node2_id = parsed["extra"][:2]
-            if self.platform.delete_edge(node1_id, node2_id):
+            deleted = self.platform.delete_edge(node1_id, node2_id)
+            if deleted:
                 return f"Edge {node1_id} -> {node2_id} deleted successfully."
             else:
                 return f"ERROR: Edge {node1_id} -> {node2_id} doesn't exist."
+
         else:
             return "ERROR: Invalid delete command."
 

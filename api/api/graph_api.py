@@ -71,8 +71,7 @@ class Graph(object):
         # Remove edge from other edges adjacent
         for src, targets in self._edges.items():
             if vid in targets:
-                targets.remove(vid)
-
+                del targets[vid]
         # And then remove edge itself
         del self._vertices[vid]
         return True
@@ -96,10 +95,10 @@ class Graph(object):
     def delete_edge(self, node1_id: str, node2_id: str) -> bool:
        #If nodes ids are located in edges, we remove the edge from 1 node to another
         if node1_id in self._edges and node2_id in self._edges[node1_id]:
-            self._edges[node1_id].remove(node2_id)
+            self._edges[node1_id].pop(node2_id,None)
             # If undirected, remove reverse link too
             if not self._is_directed and node2_id in self._edges and node1_id in self._edges[node2_id]:
-                self._edges[node2_id].remove(node1_id)
+              self._edges[node2_id].pop(node1_id, None)
             return True
         return False
 
@@ -108,10 +107,12 @@ class Graph(object):
         if not self._is_directed:
             self._add_edge(id2, id1, **attrs)
 
-    def edit_edge(self, id1: str, id2: str, **attrs) -> None:
-        self._edit_edge(id1, id2, **attrs)
-        if not self._is_directed:
-            self._edit_edge(id2, id1, **attrs)
+    def edit_edge(self, old_source: str, new_target: str, **attrs) -> None:
+        for target in list(self._edges.get(old_source, {})):
+            old_attrs = self._edges[old_source].pop(target)
+            self._edges[old_source][new_target] = {**old_attrs, **attrs}
+            break
+
     
     def to_json_dict_hierarchy(self):
         data = {"community": {"members": []}}

@@ -20,7 +20,7 @@ class Platform():
         return node
     
     def delete_vertex(self, vertex: Node) -> None:
-        self.delete_vertex(vertex)
+        self.graph.delete_vertex(vertex)
         self.visualizer.remove_node(vertex)
     
     def edit_edge(self, old_source: str, new_target: str) -> None:
@@ -28,7 +28,7 @@ class Platform():
         self.visualizer.edit_link(old_source, new_target)
 
     def delete_edge(self, node1_id: str, node2_id: str) -> bool:
-        self.visualizer.remove_link(node1_id, node2_id)
+        self.graph.delete_edge(node1_id, node2_id)
         return self.graph.delete_edge(node1_id, node2_id)
 
     def create_edge(self, id1: str, id2: str) -> None:

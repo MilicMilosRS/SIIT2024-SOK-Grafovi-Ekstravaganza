@@ -5,21 +5,27 @@ from simple_visualizer import SimpleVisualizer
 from django.http import JsonResponse, HttpResponse
 import json
 from django.views.decorators.csrf import csrf_exempt
-from .management.commands import cli
+
 from graph_api import Graph
 from graph_platform import Platform
 
-# --- Initialize once at import time ---
+from .management.commands.CommandLine import CommandLine
+from .management.commands import CreateCommand, EditCommand, DeleteCommand, SaveGraphCommand
+
+
 filepath = "../large_graph.json"
 js = JSONDataSource(filepath)
 js.parse_json()
 graph_instance = js.convert_to_api_graph()
 
-# cli_instance = cli.CommandLine(graph_instance, filepath)
-# visualizer = BlockVisualizer()
-
 platform = Platform(graph_instance, SimpleVisualizer())
-cli_instance = cli.CommandLine(platform, filepath)
+
+cli_instance = CommandLine(platform, filepath)
+# cli_instance.register_command("create", CreateCommand(platform))
+# cli_instance.register_command("delete", DeleteCommand(platform))
+# cli_instance.register_command("edit", EditCommand(platform))
+# cli_instance.register_command("save", SaveGraphCommand(platform))
+
 
 def HomePage(request):
     global platform
@@ -31,11 +37,9 @@ def HomePage(request):
     else:
         platform.set_visualizer(SimpleVisualizer())
 
-    for node in platform.graph._vertices.keys():
-            print(node)
-
     context = {"main_view": platform.generate_main_view()}
     return render(request, 'index.html', context)
+
 
 @csrf_exempt
 def run_command(request):
@@ -46,10 +50,12 @@ def run_command(request):
         except Exception:
             return JsonResponse({"output": "Invalid request"}, status=400)
 
+        # Send the text input into your CommandLine
         output = cli_instance.process_command(command)
         return JsonResponse({"output": output})
 
     return JsonResponse({"output": "Invalid method"}, status=405)
+
 
 @csrf_exempt
 def partial_graph_view(request):
