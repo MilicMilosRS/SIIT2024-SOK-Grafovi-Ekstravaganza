@@ -2,28 +2,14 @@ import json
 from django.core.management.base import BaseCommand, CommandError
 import shlex
 
-from graph_api import Graph, Node
+from graph_platform import Platform
+from graph_api import Node
  
 class CommandLine():
-    def __init__(self, graph: Graph, file_path: str = None):
-        self.graph = graph
+    def __init__(self, platform: Platform, file_path: str = None):
+        self.platform = platform
         self.file_path = file_path
         pass
-    def handle_create(self, arg):
-        parsed = self.parse_cli_args(arg)
-        if parsed["type"] == "node":
-            node = Node(parsed["id"])
-            for k,v in parsed["properties"].items():
-                node.set_attribute(k,v)
-            self.graph.add_vertex(node)
-            return f"Node created successfully: {node.get_attributes()}"
-        elif parsed["type"] == "edge":
-            node1_id, node2_id = parsed["extra"][:2]
-            self.graph.create_edge(node1_id,node2_id)
-            return f"Edge created successfully (id={parsed['id']}) {node1_id} -> {node2_id} with props {parsed['properties']}"
-        else:
-            return "Invalid create command."
-
     
     def process_command(self, command):
         tokens = shlex.split(command)
@@ -52,18 +38,16 @@ class CommandLine():
     def handle_create(self, arg):
         parsed = self.parse_cli_args(arg)
         if parsed["type"] == "node":
-            if parsed["id"] in self.graph._vertices:
+            if parsed["id"] in self.platform.graph._vertices:
                 return ("ERROR: That node already exists.")
             node = Node(parsed["id"])
             for k,v in parsed["properties"].items():
                 node.set_attribute(k,v)
-            self.graph.add_vertex(node)
+            self.platform.add_vertex(node)
             return f"Node created successfully: {node.get_attributes()}"
         elif parsed["type"] == "edge":
-            if parsed["id"] in self.graph._edges:
-                return ("ERROR: That edge already exists")
             node1_id,node2_id = parsed["extra"][:2]
-            self.graph.create_edge(node1_id,node2_id)
+            self.platform.create_edge(node1_id, node2_id)
             return f"Edge created successfully (id={parsed['id']}) {node1_id} -> {node2_id} with props {parsed['properties']}"
         else:
             return ("ERROR: Invalid create command.")
@@ -72,16 +56,16 @@ class CommandLine():
         parsed = self.parse_cli_args(arg)
         
         if parsed["type"] == "node":
-            if parsed["id"] not in self.graph._vertices:
+            if parsed["id"] not in self.platform.graph._vertices:
                 return ("ERROR: That node doesn't exist in the graph.")
             node = Node(parsed["id"])
             for k,v in parsed["properties"].items():
                 node.set_attribute(k,v)
-            self.graph.edit_vertex(node)
+            self.platform.edit_vertex(node)
             return f"Node edited successfully: {node.get_attributes()}"
         elif parsed["type"] == "edge":
             node1_id, node2_id = parsed["extra"][:2]
-            self.graph.edit_edge(node1_id, node2_id)
+            self.platform.edit_edge(node1_id, node2_id)
             return f"Edge edited successfully {node1_id} -> {node2_id} with props {parsed['properties']}"
         else:
             return ("ERROR: Invalid create command.")
@@ -91,13 +75,13 @@ class CommandLine():
 
         if parsed["type"] == "node":
             node_id = parsed["id"]
-            if self.graph.delete_vertex(Node(node_id)):
+            if self.platform.delete_vertex(Node(node_id)):
                 return f"Node {node_id} deleted successfully."
             else:
                 return f"ERROR: Node {node_id} doesn't exist."
         elif parsed["type"] == "edge":
             node1_id, node2_id = parsed["extra"][:2]
-            if self.graph.delete_edge(node1_id, node2_id):
+            if self.platform.delete_edge(node1_id, node2_id):
                 return f"Edge {node1_id} -> {node2_id} deleted successfully."
             else:
                 return f"ERROR: Edge {node1_id} -> {node2_id} doesn't exist."
@@ -126,7 +110,7 @@ class CommandLine():
     def handle_save(self, args=None):
         try:
             with open(self.file_path, "w") as f:
-                json.dump(self.graph.to_json_dict_hierarchy(), f, indent=2)
+                json.dump(self.platform.graph.to_json_dict_hierarchy(), f, indent=2)
             return f"Graph saved successfully to {self.file_path}."
         except Exception as e:
             return f"ERROR: Failed to save graph. {str(e)}"

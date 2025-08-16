@@ -3,21 +3,16 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "block-visualizer"
-version = "0.1.0"
-description = "Visualizer plugin using Django templates and D3.js"
+name = "graph_platform"
+version = "0.1.1"
+description = "Platform for manipulating graph data and communication between plugins"
 authors = [
     { name = "Miloš Milić", email = "milicmilos.rs@gmail.com" }
 ]
 readme = "README.md"
 requires-python = ">=3.9"
 license = { text = "MIT" }
-dependencies = [
-    "graph-api",
-    "Django>=4.0",
-    "websockets",
-    "asyncio",
-]
+dependencies = ["graph-api"]
 
 [tool.setuptools.packages.find]
-where = ["block_visualizer"]
+where = ["platform"]

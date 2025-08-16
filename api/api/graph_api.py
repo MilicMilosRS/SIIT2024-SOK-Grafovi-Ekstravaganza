@@ -33,6 +33,8 @@ class Node(object):
 class Graph(object):
     def __init__(self, directed: bool) -> None:
         self._vertices = {}
+        #Dict of dicts
+        #Example: node1_id: {node2_id: {EDGE ATTRIBUTES}, node3_id: {EDGE ATTRIBUTES}}
         self._edges = {}
         self._is_directed = directed
 
@@ -71,73 +73,47 @@ class Graph(object):
         # Remove edge from other edges adjacent
         for src, targets in self._edges.items():
             if vid in targets:
-                targets.remove(vid)
+                del targets[vid]
 
         # And then remove edge itself
         del self._vertices[vid]
         return True
 
-
-    
-    def _add_edge(self, id1: int, id2: int) -> None:
+    def _add_edge(self, id1: str, id2: str, **attrs) -> None:
         if id1 not in self._vertices or id2 not in self._vertices:
             return
 
         if id1 not in self._edges:
-            self._edges[id1] = []
+            self._edges[id1] = {}
         if id2 not in self._edges[id1]:
-            self._edges[id1].append(id2)
+            self._edges[id1][id2] = attrs
     
-    def edit_edge(self, old_source: str, new_target: str) -> None:
-        # See if both nodes exist
-        if old_source not in self._vertices or new_target not in self._vertices:
-            return "ERROR: One or both nodes do not exist."
-
-        # Make sure there is an edge or we won't have an edge to edit xd
-        if old_source not in self._edges or not self._edges[old_source]:
-            return "ERROR: That source node has no edges to edit."
-
-        # First we remove old edge.
-        old_target = self._edges[old_source][0]
-        if old_target in self._edges[old_source]:
-            self._edges[old_source].remove(old_target)
-
-        # If undirected, remove reverse connection safely
-        if not self._is_directed:
-            if old_target not in self._edges:
-                self._edges[old_target] = []
-            if old_source in self._edges[old_target]:
-                self._edges[old_target].remove(old_source)
-
-        # Then we Add new connection
-        if old_source not in self._edges:
-            self._edges[old_source] = []
-        if new_target not in self._edges[old_source]:
-            self._edges[old_source].append(new_target)
-
-        # If undirected, add reverse connection safely
-        if not self._is_directed:
-            if new_target not in self._edges:
-                self._edges[new_target] = []
-            if old_source not in self._edges[new_target]:
-                self._edges[new_target].append(old_source)
-
-        return f"Edge updated: {old_source} -> {new_target} (was {old_source} -> {old_target})"
+    def _edit_edge(self, id1: str, id2: str, **attrs) -> None:
+        if id1 not in self._edges:
+            return
+        if id2 not in self._edges[id1]:
+            return
+        self._edges[id1][id2] = attrs
 
     def delete_edge(self, node1_id: str, node2_id: str) -> bool:
        #If nodes ids are located in edges, we remove the edge from 1 node to another
         if node1_id in self._edges and node2_id in self._edges[node1_id]:
-            self._edges[node1_id].remove(node2_id)
+            del self._edges[node1_id][node2_id]
             # If undirected, remove reverse link too
             if not self._is_directed and node2_id in self._edges and node1_id in self._edges[node2_id]:
-                self._edges[node2_id].remove(node1_id)
+                del self._edges[node2_id][node1_id]
             return True
         return False
 
-    def create_edge(self, id1: int, id2: int) -> None:
-        self._add_edge(id1, id2)
+    def create_edge(self, id1: str, id2: str, **attrs) -> None:
+        self._add_edge(id1, id2, **attrs)
         if not self._is_directed:
-            self._add_edge(id2, id1)
+            self._add_edge(id2, id1, **attrs)
+
+    def edit_edge(self, id1: str, id2: str, **attrs) -> None:
+        self._edit_edge(id1, id2, **attrs)
+        if not self._is_directed:
+            self._edit_edge(id2, id1, **attrs)
     
     def to_json_dict_hierarchy(self):
         data = {"community": {"members": []}}
@@ -153,9 +129,63 @@ class Graph(object):
                     friends.append({k: v for k, v in friend_attrs.items() if k != "id"})
                 member_dict["friends"] = friends
                 data["community"]["members"].append(member_dict)
-        
         return data
+    
+    #Returns a tuple.
+    #First element is outgoing connections.
+    #Second element is incoming connections.
+    def get_connected_nodes(self, node_id: str):
+        outgoing = []
+        incoming = []
+
+        #Loop through outgoing connections and take the nodes
+        if node_id in self._edges:
+            for outgoing_node_id in self._edges[node_id].keys():
+                outgoing.append(self._vertices[outgoing_node_id])
+
+        #Loop through all connections and take the incoming nodes
+        for src_id in self._edges.keys():
+            for trgt_id in self._edges[src_id].keys():
+                if trgt_id == node_id:
+                    incoming.append(self._vertices[src_id])
+        
+        return (outgoing, incoming)
+
 class GraphVisualizer(ABC):
     #Returns a string representing an HTML DOM visualization of the provided graph
+    @abstractmethod
     def visualize_graph(self, g: Graph)->str:
+        pass
+
+    @abstractmethod
+    def add_node(self, node: Node):
+        pass
+
+    @abstractmethod
+    def edit_node(self, node: Node):
+        pass
+
+    @abstractmethod
+    def remove_node(self, node: Node):
+        pass
+
+    @abstractmethod
+    def add_link(self, id_source: str, id_target: str, **attrs):
+        pass
+
+    @abstractmethod
+    def edit_link(self, id_source: str, id_target: str, **attrs):
+        pass
+
+    @abstractmethod
+    def remove_link(self, id_source: str, id_target: str):
+        pass
+
+    #When the visualizer being used is switched from this to something else
+    @abstractmethod
+    def on_switched_from(self):
+        pass
+
+    @abstractmethod
+    def on_switched_to(self):
         pass

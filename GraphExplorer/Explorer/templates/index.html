@@ -59,6 +59,9 @@
             .tree-view{
                 border-bottom: 3px solid orange;
                 flex-grow: 1;
+                display: flex;
+                flex-direction: column;
+                overflow: hidden;
             }
 
             .bird-view{
@@ -101,7 +104,7 @@
                 </div>
             </div>
             <div class="tree-view">
-                tree view goes here
+                {% include "treeview.html" %}
             </div>
             <div class="bird-view">
                 bird view goes here
@@ -149,24 +152,6 @@
                         outputDiv.innerHTML += `<div>> ${command}</div>`;
                         outputDiv.innerHTML += `<div>${data.output}</div>`;
                         outputDiv.scrollTop = outputDiv.scrollHeight;
-
-                        return fetch("/partial-graph")
-                    })
-                    .then(res => res.text())
-                    .then(html => {
-                        const container = document.getElementById('main-view');
-                        container.innerHTML = html;
-
-                        container.querySelectorAll("script").forEach(script => {
-                            const newScript = document.createElement("script");
-                            if (script.src) {
-                                newScript.src = script.src;
-                            } else {
-                                newScript.textContent = script.textContent;
-                            }
-                            document.body.appendChild(newScript);
-                            document.body.removeChild(newScript);
-                        });
                     })
                     .catch(() => {
                         const outputDiv = document.getElementById('cli-output');
