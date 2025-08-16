@@ -154,7 +154,7 @@ class Graph(object):
 class GraphVisualizer(ABC):
     #Returns a string representing an HTML DOM visualization of the provided graph
     @abstractmethod
-    def visualize_graph(self, g: Graph)->str:
+    def visualize_graph(self, g: Graph, selected_node: Node)->str:
         pass
 
     @abstractmethod
@@ -188,4 +188,8 @@ class GraphVisualizer(ABC):
 
     @abstractmethod
     def on_switched_to(self):
+        pass
+
+    @abstractmethod
+    def on_selection_changed(self, node: Node):
         pass
