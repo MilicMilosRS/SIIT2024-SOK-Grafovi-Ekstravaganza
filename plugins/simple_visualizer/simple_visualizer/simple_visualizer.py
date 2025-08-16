@@ -4,7 +4,7 @@ import os
 
 class SimpleVisualizer(GraphVisualizer):
     #Returns DOM for main visualization window
-    def visualize_graph(self, g: Graph)->str:
+    def visualize_graph(self, g: Graph, selected_node: Node)->str:
         parsedNodes = []
         for node in g._vertices.values():
             parsedNodes.append(node._attributes)
@@ -43,4 +43,7 @@ class SimpleVisualizer(GraphVisualizer):
         pass
 
     def on_switched_from(self):
+        pass
+
+    def on_selection_changed(self, node):
         pass
