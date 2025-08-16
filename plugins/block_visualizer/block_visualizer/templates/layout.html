@@ -21,6 +21,32 @@
             margin: 3px;
         }
 
+        .node-selected .node-head{
+            background-color:rgb(0, 16, 109);
+            color: white;
+            border-color: rgb(0, 16, 109);
+        }
+
+        .node-selected .node-body{
+            background-color:rgb(182, 193, 255);
+            border-color: rgb(0, 16, 109);
+        }
+
+        .node-head {
+            padding:10px;
+            border:1px solid black;
+            text-align:center;
+            background-color:orange;
+            border-radius:10px 10px 0px 0px;
+        }
+        
+        .node-body {
+            background-color:#fad7a0;
+            border-radius:0px 0px 10px 10px;
+            padding:10px;
+            border:1px solid black;
+        }
+
     </style>
 
     <div class="container full-screen">
@@ -41,7 +67,7 @@
         
         let nodeElements = container.append("g").selectAll("foreignObject");
         let isDirected = IS_DIRECTED;
-        console.log(isDirected)
+        let initialSelection = SELECTED_ID;
 
         // Arrowhead marker
         svg.append("defs").append("marker")
@@ -62,12 +88,21 @@
             .on("zoom", (event) => container.attr("transform", event.transform))
         );
 
+        svg.on("click", () => {
+            fetch(`/deselect/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+        });
+
         function nodeToHTML(node){
-            let html = `<div style='padding:10px; border:1px solid black;text-align:center;background-color:orange; border-radius:10px 10px 0px 0px;'>${node.id}</div>`;
+            let html = `<div class='node-head'>${node.id}</div>`;
             let attrHTML = Object.keys(node)
                 .filter(k => k !== "id")
                 .map(k => `<p style='white-space:nowrap'>${k}: ${node[k]}</p>`).join("<br/>");
-            html += `<div style='background-color:#fad7a0; border-radius:0px 0px 10px 10px; padding:10px; border:1px solid black;'>${attrHTML}</div>`;
+            html += `<div class='node-body'>${attrHTML}</div>`;
             return html;
         }
 
@@ -96,7 +131,16 @@
                     .on("start", dragstarted)
                     .on("drag", dragged)
                     .on("end", dragended)
-                );
+                )
+                .on("click", (event, d) => {
+                    fetch(`/select/${encodeURIComponent(d.id)}/`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        }
+                    })
+                    event.stopPropagation();
+                });
 
             foEnter.append("xhtml:div")
                 .attr("style", "width:fit-content;")
@@ -210,20 +254,33 @@
             for (let key in l.attrs) d.innerHTML += `<p>${key}: ${l.attrs[key]}</p>`;
         }
 
+        function deselectNodes(){
+            d3.selectAll("foreignObject > div").classed("node-selected", false);
+        }
+
+        function selectNode(node_id){
+            deselectNodes();
+            d3.select(`foreignObject > div[nodeId='${node_id}']`)
+                .classed("node-selected", true);
+        }
+
         // WebSocket updates
         let socket = new WebSocket("ws://localhost:8765");
         socket.onopen = () => console.log("Websocket connected")
         socket.onerror = () => console.log("Error connecting websocket")
         socket.onmessage = (event) => {
-            console.log("On message")
             let msg = JSON.parse(event.data);
             if (msg.action === "addNode") addNode(msg.node);
             if (msg.action === "removeNode") removeNode(msg.id);
             if (msg.action === "addLink") addLink(msg.source, msg.target, msg.attrs);
             if (msg.action === "removeLink") removeLink(msg.source, msg.target);
             if (msg.action === "setDirected") isDirected = msg.value;
+            if (msg.action === "selectNode") selectNode(msg.node_id);
+            if (msg.action === "deselectNode") deselectNodes();
         };
 
         updateGraph();
+        if(initialSelection)
+            selectNode(initialSelection)
     </script>
 </div>

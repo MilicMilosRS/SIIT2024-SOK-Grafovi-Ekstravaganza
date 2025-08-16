@@ -56,7 +56,7 @@ class BlockVisualizer(GraphVisualizer):
             msg = json.dumps(update)
             await asyncio.gather(*(client.send(msg) for client in self.clients))
 
-    def visualize_graph(self, g: Graph) -> str:
+    def visualize_graph(self, g: Graph, selected_node: Node) -> str:
         parsedNodes = []
         for node in g._vertices.values():
             parsedNodes.append(node._attributes)
@@ -70,7 +70,12 @@ class BlockVisualizer(GraphVisualizer):
         with open(template_path + "/templates/layout.html") as file:
             html = file.read()
 
-        return html.replace("NODES", json.dumps(parsedNodes)).replace("LINKS", json.dumps(parsedLinks)).replace("IS_DIRECTED", "true" if g._is_directed else "false")
+        html = html.replace("NODES", json.dumps(parsedNodes))
+        html = html.replace("LINKS", json.dumps(parsedLinks))
+        html = html.replace("IS_DIRECTED", "true" if g._is_directed else "false")
+        html = html.replace("SELECTED_ID", selected_node.get_id() if selected_node is not None else "null")
+
+        return html
 
     def add_node(self, node: Node):
         print("adding node")
@@ -113,3 +118,14 @@ class BlockVisualizer(GraphVisualizer):
             "source": id_source,
             "target": id_target
         })
+
+    def on_selection_changed(self, node):
+        if node is not None:
+            self._send_update({
+                "action": "selectNode",
+                "node_id": node.get_id()
+            })
+        else:
+            self._send_update({
+                "action": "deselectNode"
+            })

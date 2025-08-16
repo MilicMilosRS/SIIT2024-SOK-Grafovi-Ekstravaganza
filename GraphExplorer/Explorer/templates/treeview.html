@@ -1,5 +1,23 @@
 <div style="width: 100%; height: 100%;">
     <style>
+        button {
+            background: none;
+            border: none;
+            font-weight: bold;
+            cursor: pointer;
+            padding: 0;
+        }
+
+        .selected {
+            background-color: rgb(69, 69, 255);
+            color: white;
+        }
+
+        .unselected {
+            background-color: white;
+            color: black;
+        }
+
         .treenode-outer-container {
             list-style-type: none;
             padding-left: 20px;
@@ -10,7 +28,6 @@
             margin: 2px 0;
             cursor: pointer;
             width: fit-content;
-            background-color: white;
             border: solid black 2px;
             border-radius: 10px;
             padding-left: 10px;
@@ -38,10 +55,6 @@
             display: inline-block;
         }
 
-        .node-label:hover {
-            background-color: #e0e0e0;
-        }
-
         .toggle-btn { 
             margin-right: 4px;
             cursor:pointer;
@@ -67,6 +80,7 @@
 
     <script>
         let forestData;
+        let selected_id = null;
 
         function createTreeNode(node) {
             const outerest_div = document.createElement('div')
@@ -85,10 +99,23 @@
             outer_div.appendChild(attributes_div)
 
             const label = document.createElement('span');
-            label.textContent = `${node.node_id} (${node.tree_id})`;
+            label.textContent = `${node.node_id}`;
             label.className = 'node-label';
 
             treenode_div.appendChild(label);
+            if(node.node_id == selected_id)
+                treenode_div.classList.add("selected")
+            else
+                treenode_div.classList.add("unselected")
+            treenode_div.addEventListener('click', function(event){
+                event.stopPropagation();
+                fetch(`/select/${encodeURIComponent(node.node_id)}/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                })
+            })
 
             // Create toggle button
             const btn = document.createElement('button');
@@ -100,6 +127,10 @@
             for(const key in node.attributes){
                 const treenode_div = document.createElement('div');
                 treenode_div.classList.add("treenode-container")
+                if(node.node_id == selected_id)
+                    treenode_div.classList.add("selected")
+                else
+                    treenode_div.classList.add("unselected")
                 
                 const lbl = document.createElement('span');
                 lbl.textContent = `${key}: ${node.attributes[key]}`
@@ -141,11 +172,21 @@
 
         const evtSource = new EventSource("/treeview/updates");
         evtSource.onmessage = function(event) {
-            forestData = JSON.parse(event.data);
+            let metaData = JSON.parse(event.data);
+            selected_id = metaData.selected_id;
+            forestData = metaData.treeview;
+
             let container = document.getElementById('tree-container');
-            container.innerHTML = ''; // clear old tree
+            container.innerHTML = '';
+            container.addEventListener('click', function(event){
+                fetch(`/deselect/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                })
+            })
             renderForest(forestData);
-            console.log(event.data);
         };
     </script>
 </div>

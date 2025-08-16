@@ -1,4 +1,5 @@
 from collections.abc import Callable
+import json
 from graph_api import Graph, GraphVisualizer, Node
 from TreeVIew.tree_view import TreeNode, ForestView
 
@@ -8,6 +9,7 @@ class Platform():
         self.graph = graph
         self.visualizer = visualizer
         self.forestView = ForestView(graph)
+        self.selected_node = None
 
     #Graph update listener stuff
     def attach_update_listener(self, func: Callable[[None],None]):
@@ -62,7 +64,11 @@ class Platform():
 
     #TreeView stuff
     def get_tree_view(self) -> str:
-        return self.forestView.convert_to_json()
+        data = {
+            'selected_id': self.selected_node.get_id() if self.selected_node is not None else None,
+            'treeview': self.forestView.convert_to_json()
+                }
+        return data
     
     def expand_tree_view(self, tree_id: str):
         self.forestView.expand_node_by_tree_id(tree_id)
@@ -77,4 +83,22 @@ class Platform():
         self.visualizer.on_switched_to()
 
     def generate_main_view(self) -> str:
-        return self.visualizer.visualize_graph(self.graph)
+        ret = self.visualizer.visualize_graph(self.graph, self.selected_node)
+        self.visualizer.on_selection_changed(self.selected_node)
+        return ret
+    
+    #Selection stuff
+    def select_node(self, node_id: str) -> Node:
+        node = self.graph._vertices.get(node_id)
+        if node is None:
+            return None
+        
+        self.selected_node = node
+        self._graph_updated()
+        self.visualizer.on_selection_changed(node)
+        return self.selected_node
+    
+    def deselect_node(self):
+        self.selected_node = None
+        self._graph_updated()
+        self.visualizer.on_selection_changed(None)

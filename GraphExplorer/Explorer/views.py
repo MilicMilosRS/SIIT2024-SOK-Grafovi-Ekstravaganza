@@ -12,14 +12,14 @@ from graph_platform import Platform, TreeNode, ForestView
 
 # --- Initialize once at import time ---
 filepath = "../large_graph.json"
-# js = JSONDataSource(filepath)
-# js.parse_json()
-# graph_instance = js.convert_to_api_graph()
+js = JSONDataSource(filepath)
+js.parse_json()
+graph_instance = js.convert_to_api_graph()
 
 # cli_instance = cli.CommandLine(graph_instance, filepath)
 # visualizer = BlockVisualizer()
 
-platform = Platform(Graph(False), SimpleVisualizer())
+platform = Platform(graph_instance, SimpleVisualizer())
 cli_instance = cli.CommandLine(platform, filepath)
 
 def HomePage(request):
@@ -104,6 +104,24 @@ def expand_treeview_node(request):
             return JsonResponse({"output": "Invalid request"}, status=400)
 
         platform.expand_tree_view(id)
+        return JsonResponse({}, status=200)
+
+    return JsonResponse({"output": "Invalid method"}, status=405)
+
+#Selection stuff
+@csrf_exempt
+def select_node(request, item_id):
+    if request.method == "POST":
+        if platform.select_node(item_id) is None:
+            return JsonResponse({}, status=404)
+        return JsonResponse({}, status=200)
+
+    return JsonResponse({"output": "Invalid method"}, status=405)
+
+@csrf_exempt
+def deselect_node(request):
+    if request.method == "POST":
+        platform.deselect_node()
         return JsonResponse({}, status=200)
 
     return JsonResponse({"output": "Invalid method"}, status=405)
