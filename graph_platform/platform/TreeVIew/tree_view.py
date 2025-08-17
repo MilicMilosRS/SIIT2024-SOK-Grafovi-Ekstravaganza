@@ -49,7 +49,7 @@ class ForestView:
         self.graph = graph
         self.roots = []
         #Array of arrays, each array contains the id's of nodes that were expanded, so we know what line of nodes to expand on refresh
-        self._expanded_paths = []
+        self._expanded_paths = set()
         self._build_forest()
 
     def _restore_expansions(self):
@@ -95,7 +95,6 @@ class ForestView:
         
         self._restore_expansions()
 
-    #If a single node is being added, it will be isolated, so just make it root
     def graph_updated(self):
         self._build_forest()
 
@@ -109,7 +108,30 @@ class ForestView:
             node.expand()
             path = self._find_tree_node_path(tree_id)
             id_path = list(map(lambda tree_node: tree_node.node.get_id(), path))
-            self._expanded_paths.append(id_path)
+            self._expanded_paths.add(tuple(id_path))
+            return True
+        return False
+    
+    def _delete_expanded_path(self, tree_id: str):
+        path = self._find_tree_node_path(tree_id)
+        if path:
+            id_path = list(map(lambda tree_node: tree_node.node.get_id(), path))
+            paths_to_remove = []
+            for path_ids in self._expanded_paths:
+                if path_ids[:len(id_path)] == tuple(id_path):
+                    paths_to_remove.append(path_ids)
+            print(self._expanded_paths)
+            print(id_path)
+            print(paths_to_remove)
+            for p in paths_to_remove:
+                if tuple(p) in self._expanded_paths:
+                    self._expanded_paths.remove(p)
+
+    def collapse_node_by_tree_id(self, tree_id: str) -> bool:
+        node = self._find_tree_node_by_id(tree_id, self.roots)
+        if node:
+            node.collapse()
+            self._delete_expanded_path(tree_id)
             return True
         return False
 
@@ -155,3 +177,37 @@ class ForestView:
             roots.append(tree_to_json(root))
 
         return roots
+    
+    def expand_path_to_node(self, node_id: str) -> bool:
+        path = self._find_tree_node_path_by_node_id(node_id)
+        if not path:
+            return False
+
+        id_path = list(map(lambda tree_node: tree_node.node.get_id(), path))
+
+        for i in range(1, len(id_path)):
+            self._expanded_paths.add(tuple(id_path[:i]))
+
+        return True
+
+    def _find_tree_node_path_by_node_id(self, node_id: str):
+        stack = [(root, [root]) for root in self.roots]
+
+        visited = set()
+
+        while stack:
+            current, path = stack.pop()
+            if current.node.get_id() in visited:
+                continue
+            visited.add(current.node.get_id())
+
+            if current.node.get_id() == node_id:
+                return path
+
+            if current._children is None:
+                current.expand()
+
+            for child in current.get_children():
+                stack.append((child, path + [child]))
+
+        return None
