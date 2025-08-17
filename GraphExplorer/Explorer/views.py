@@ -11,7 +11,7 @@ from graph_api import Graph, Node
 from graph_platform import Platform, TreeNode, ForestView
 
 # --- Initialize once at import time ---
-filepath = "../large_graph.json"
+filepath = "../mediun.json"
 js = JSONDataSource(filepath)
 js.parse_json()
 graph_instance = js.convert_to_api_graph()

@@ -1,0 +1,75 @@
+<!-- BirdView container -->
+<div style="width: 100%; height: 100%;">
+    <svg id="birdView" width="100%" height="100%">
+        <g id="birdContent"></g> <!-- opcionalno za kopiranje graf elemenata -->
+        <rect id="viewportRect" fill="none" stroke="black" stroke-width="30"></rect>
+    </svg>
+</div>
+
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<script>
+const birdView = document.getElementById("birdView");
+const birdContent = birdView.querySelector("#birdContent");
+const viewportRect = birdView.querySelector("#viewportRect");
+let mainSvg;
+let mainG;
+
+function updateBirdView(transform) {
+    if(!mainG) return;
+
+    const bbox = mainG.getBBox();
+
+    // BirdView prikazuje ceo graf
+    birdView.setAttribute("viewBox", `${bbox.x} ${bbox.y} ${bbox.width} ${bbox.height}`);
+
+    const scaleX = birdView.clientWidth / bbox.width;
+    const scaleY = birdView.clientHeight / bbox.height;
+
+    // viewport pravougaonik
+    viewportRect.setAttribute("x", -transform.x / transform.k);
+    viewportRect.setAttribute("y", -transform.y / transform.k);
+    viewportRect.setAttribute("width", mainSvg.clientWidth / transform.k);
+    viewportRect.setAttribute("height", mainSvg.clientHeight / transform.k);
+
+    // **kopiranje sadržaja MainView u BirdView**
+    // za performanse možeš napraviti "mini verziju" grafike, npr samo <path> za linkove i male krugove za čvorove
+    birdContent.innerHTML = mainG.innerHTML;
+};
+
+// Sluša custom event iz MainView
+document.addEventListener("mainViewZoomed", (e) => {
+    mainG = e.detail.mainG;
+    transform = e.detail.transform;
+    mainSvg = e.detail.mainSvg;
+    updateBirdView(transform);
+});
+
+birdView.addEventListener("click", (event) => {
+    const bbox = mainG.getBBox();
+    const viewWidth = birdView.clientWidth;
+    const viewHeight = birdView.clientHeight;
+
+    const scale = Math.min(viewWidth/bbox.width, viewHeight/bbox.height);
+    const graphWidth = bbox.width * scale;
+    const graphHeight = bbox.height * scale;
+    const offsetX = (viewWidth - graphWidth)/2;
+    const offsetY = (viewHeight - graphHeight)/2;
+
+    // klik u fizičkim koordinatama BirdView
+    const clickX = event.clientX - birdView.getBoundingClientRect().left;
+    const clickY = event.clientY - birdView.getBoundingClientRect().top;
+
+    // preslikavanje u MainView koordinatni sistem
+    const targetX = bbox.x + (clickX - offsetX)/scale;
+    const targetY = bbox.y + (clickY - offsetY)/scale;
+
+    // uzimamo trenutni zoom
+    const t = d3.zoomTransform(mainSvg);
+
+    // centriranje viewporta: pomeramo tako da target bude u sredini, uz uzimanje u obzir trenutnog zoom-a
+    const newX = -targetX * t.k + mainSvg.clientWidth/2;
+    const newY = -targetY * t.k + mainSvg.clientHeight/2;
+
+    document.dispatchEvent(new CustomEvent("birdViewClick", { detail: { newX, newY }}));
+});
+</script>

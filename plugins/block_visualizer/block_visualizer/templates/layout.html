@@ -63,6 +63,7 @@
         let simulation;
         let svg = d3.select("#main-view-container");
         let container = svg.append("g");
+        container.attr("transform", "translate(0.0, 0.0) scale(1.0)")
         let linkElements = container.append("g").selectAll(".link");
         
         let nodeElements = container.append("g").selectAll("foreignObject");
@@ -82,11 +83,18 @@
             .attr("d", "M0,-5L10,0L0,5") // triangle
             .attr("fill", "black");
 
-        // Zoom behavior
-        svg.call(d3.zoom()
+        const mainZoom = d3.zoom()
             .scaleExtent([0.1, 5])
-            .on("zoom", (event) => container.attr("transform", event.transform))
-        );
+            .on("zoom", (event) => {
+                container.attr("transform", event.transform);
+
+                const ev = new CustomEvent("mainViewZoomed", {
+                    detail: { mainG: container.node(), transform: event.transform, mainSvg: svg.node() }
+                });
+                document.dispatchEvent(ev);
+            });
+
+        svg.call(mainZoom);
 
         svg.on("click", () => {
             fetch(`/deselect/`, {
@@ -260,7 +268,7 @@
 
         function selectNode(node_id){
             deselectNodes();
-            d3.select(`foreignObject > div[nodeId='${node_id}']`)
+            d3.selectAll(`foreignObject > div[nodeId='${node_id}']`)
                 .classed("node-selected", true);
         }
 
@@ -282,5 +290,14 @@
         updateGraph();
         if(initialSelection)
             selectNode(initialSelection)
+
+        document.addEventListener("birdViewClick", (e) => {
+            const { newX, newY } = e.detail;
+            const t = d3.zoomTransform(svg.node());
+
+            svg.transition()
+            .duration(300)
+            .call(mainZoom.transform, d3.zoomIdentity.translate(newX, newY).scale(t.k));
+        });
     </script>
 </div>
