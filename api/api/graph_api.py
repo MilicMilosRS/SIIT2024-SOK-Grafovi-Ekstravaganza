@@ -193,3 +193,7 @@ class GraphVisualizer(ABC):
     @abstractmethod
     def on_selection_changed(self, node: Node):
         pass
+
+    @abstractmethod
+    def revisualize_graph(self, graph: Graph):
+        pass

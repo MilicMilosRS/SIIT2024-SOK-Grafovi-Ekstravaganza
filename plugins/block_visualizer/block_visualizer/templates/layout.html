@@ -182,6 +182,63 @@
             }
         }
 
+        function revisualize(newNodes, newLinks) {
+            // === 1. Reconcile nodes ===
+            const newNodeIds = newNodes.map(n => n.id);
+
+            // Remove nodes no longer present
+            nodes = nodes.filter(n => newNodeIds.includes(n.id));
+
+            // Add or update nodes
+            newNodes.forEach(n => {
+                let existing = nodes.find(x => x.id === n.id);
+                if (existing) {
+                    // Update attributes without overwriting x/y
+                    Object.keys(n).forEach(k => { if (k !== "x" && k !== "y") existing[k] = n[k]; });
+                } else {
+                    // New node: assign random x/y
+                    let node = { ...n };
+                    node.x = node.x !== undefined ? node.x : Math.random() * 500 + 50;
+                    node.y = node.y !== undefined ? node.y : Math.random() * 500 + 50;
+                    nodes.push(node);
+                }
+            });
+
+            // === 2. Reconcile links ===
+            links = []; // clear links
+            newLinks.forEach(l => {
+                let sourceNode = nodes.find(n => n.id === (l.source.id || l.source));
+                let targetNode = nodes.find(n => n.id === (l.target.id || l.target));
+                if (sourceNode && targetNode) {
+                    links.push({ source: sourceNode, target: targetNode, attrs: l.attrs || {} });
+                }
+            });
+
+            // === 3. Update graph DOM ===
+            updateGraph();
+
+            // === 4. Measure node widths/heights from actual DOM ===
+            nodeElements.select("div").each(function(d) {
+                d.width = this.offsetWidth;
+                d.height = this.offsetHeight;
+            });
+            nodeElements.attr("width", d => d.width)
+                        .attr("height", d => d.height);
+
+            // === 5. Restart simulation smoothly ===
+            if (simulation) {
+                simulation.nodes(nodes);
+                simulation.force("link").links(links);
+                simulation.alpha(1).restart();
+            } else {
+                simulation = d3.forceSimulation(nodes)
+                    .force("link", d3.forceLink().id(d => d.id).links(links).strength(0.02))
+                    .force("charge", d3.forceManyBody().strength(-1500))
+                    .force("collide", d3.forceCollide().radius(d => Math.max(d.width, d.height)/2).iterations(10))
+                    .on("tick", ticked);
+            }
+        }
+
         function hasReverseLink(link) {
             return links.some(l => l.source.id === link.target.id && l.target.id === link.source.id);
         }
@@ -285,9 +342,10 @@
             if (msg.action === "setDirected") isDirected = msg.value;
             if (msg.action === "selectNode") selectNode(msg.node_id);
             if (msg.action === "deselectNode") deselectNodes();
+            if (msg.action === "revisualize") revisualize(msg.nodes, msg.links);
         };
 
-        updateGraph();
+        revisualize(nodes, links);
         if(initialSelection)
             selectNode(initialSelection)
 

@@ -47,3 +47,6 @@ class SimpleVisualizer(GraphVisualizer):
 
     def on_selection_changed(self, node):
         pass
+
+    def revisualize_graph(self, graph: Graph):
+        pass
