@@ -11,7 +11,7 @@ from graph_api import Graph, Node
 from graph_platform import Platform, TreeNode, ForestView
 
 # --- Initialize once at import time ---
-filepath = "../large_graph.json"
+filepath = "../mediun.json"
 js = JSONDataSource(filepath)
 js.parse_json()
 graph_instance = js.convert_to_api_graph()
@@ -114,7 +114,7 @@ def sse_treeview_updates(request):
                     data = data_queue.pop(0)
                     yield f"data: {data}\n\n"
                 else:
-                    time.sleep(0.5)  # small sleep to avoid busy loop
+                    time.sleep(0.1)  # small sleep to avoid busy loop
         finally:
             _graph_update_listeners.remove(listener)
 
@@ -133,6 +133,21 @@ def expand_treeview_node(request):
         return JsonResponse({}, status=200)
 
     return JsonResponse({"output": "Invalid method"}, status=405)
+
+@csrf_exempt
+def collapse_treeview_node(request):
+    if request.method == "POST":
+        try:
+            data = json.loads(request.body)
+            id = data.get("tree_id", "")
+        except Exception:
+            return JsonResponse({"output": "Invalid request"}, status=400)
+
+        platform.collapse_tree_view(id)
+        return JsonResponse({}, status=200)
+
+    return JsonResponse({"output": "Invalid method"}, status=405)
+
 
 #Selection stuff
 @csrf_exempt

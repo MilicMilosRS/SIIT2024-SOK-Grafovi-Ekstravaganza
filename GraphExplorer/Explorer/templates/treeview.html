@@ -149,15 +149,23 @@
             btn.addEventListener('click', e => {
                 if(treenode_div.classList.contains('collapsed'))
                     fetch('/treeview/expand', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': '{{ csrf_token }}'
-                    },
-                    body: JSON.stringify({ tree_id: node.tree_id })
-                })
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': '{{ csrf_token }}'
+                        },
+                        body: JSON.stringify({ tree_id: node.tree_id })
+                    })
+                else
+                    fetch('/treeview/collapse', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': '{{ csrf_token }}'
+                        },
+                        body: JSON.stringify({ tree_id: node.tree_id })
+                    })
 
-                treenode_div.classList.toggle('collapsed');
                 btn.textContent = treenode_div.classList.contains('collapsed') ? '+' : '-';
                 e.stopPropagation(); // Prevent parent toggle
             });

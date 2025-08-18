@@ -84,6 +84,10 @@ class Platform():
         self.forestView.expand_node_by_tree_id(tree_id)
         self._graph_updated()
 
+    def collapse_tree_view(self, tree_id: str):
+        self.forestView.collapse_node_by_tree_id(tree_id)
+        self._graph_updated()
+
 
     #Visualizer stuff
     def set_visualizer(self, visualizer: GraphVisualizer) -> None:
@@ -104,6 +108,7 @@ class Platform():
             return None
         
         self.selected_node = node
+        self.forestView.expand_path_to_node(node_id)
         self._graph_updated()
         self.visualizer.on_selection_changed(node)
         return self.selected_node

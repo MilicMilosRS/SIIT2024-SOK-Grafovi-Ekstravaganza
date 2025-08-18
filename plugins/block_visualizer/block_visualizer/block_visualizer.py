@@ -129,3 +129,24 @@ class BlockVisualizer(GraphVisualizer):
             self._send_update({
                 "action": "deselectNode"
             })
+
+    #Visualize the graph dynamically, without returning a whole new html page
+    def revisualize_graph(self, graph: Graph):
+        parsedNodes = []
+        for node in graph._vertices.values():
+            parsedNodes.append(node._attributes)
+
+        parsedLinks = []
+        for source, targets in graph._edges.items():
+            for target in targets:
+                parsedLinks.append({"source": source, "target": target, "attrs": graph._edges[source][target]})
+
+        self._send_update({
+            "action": "setDirected",
+            "value": graph._is_directed
+        })
+        self._send_update({
+            "action": "revisualize",
+            "nodes": parsedNodes,
+            "links": parsedLinks
+        })
