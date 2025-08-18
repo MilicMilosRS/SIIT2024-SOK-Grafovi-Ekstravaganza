@@ -123,13 +123,15 @@ class Platform():
         self.graph.add_filter(filter)
         self._graph_updated()
         self._create_filtered_graph()
-        return self.visualizer.visualize_graph(self._filtered_graph, self.selected_node)
+        self.forestView = ForestView(self._filtered_graph)
+        self.visualizer.revisualize_graph(self._filtered_graph)
 
     def remove_filter(self, index: int):
         self.graph.remove_filter(index)
         self._graph_updated()
         self._create_filtered_graph()
-        return self.visualizer.visualize_graph(self._filtered_graph, self.selected_node)
+        self.forestView = ForestView(self._filtered_graph)
+        self.visualizer.revisualize_graph(self._filtered_graph)
     
     def _create_filtered_graph(self):
         self._filtered_graph = Graph(self.graph._is_directed)
@@ -155,10 +157,15 @@ class Platform():
                 attr = filter.attribute
                 operand = self.operands[filter.type]
                 value = filter.value
-                self._filtered_graph._vertices = [
-                    node for node in self._filtered_graph._vertices
-                    if attr in node and operand(node[attr], value)
-                ]
+                # for key, node in self._filtered_graph._vertices.items():
+                    # print(node._attributes)
+                    # print(attr)
+                    # print(attr in node._attributes)
+                self._filtered_graph._vertices = {
+                    key: node for key, node in self._filtered_graph._vertices.items()
+                    if attr in node._attributes and operand(node[attr], value)
+                }
+                
             
         node_mapping = {}
         for node_id, node in self.graph._vertices.items():

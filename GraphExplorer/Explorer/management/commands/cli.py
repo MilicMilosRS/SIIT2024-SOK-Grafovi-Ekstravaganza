@@ -89,7 +89,7 @@ class CommandLine():
             return "ERROR: Invalid delete command."
 
     def handle_filter(self,arg):
-        command: str = arg[1] + arg[2] + arg[3]
+        command: str = arg[1] + " " + arg[2] + " " + arg[3]
         command = command.strip()
         print(command)
         new_filter = Filter(command)
