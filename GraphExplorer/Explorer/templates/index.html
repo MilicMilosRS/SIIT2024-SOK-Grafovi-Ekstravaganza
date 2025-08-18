@@ -18,6 +18,12 @@
                 display: flex;
             }
 
+            .container {
+                display: flex;
+                flex-direction: column;
+                flex-grow: 1;
+            }
+
             .side-panel{
                 display: flex;
                 flex-direction: column;
@@ -90,18 +96,6 @@
                 <div class="view-thing" onclick="window.location.href='?style=block'">
                     Block
                 </div>
-                <div class="view-thing">
-                    View style 3
-                </div>
-                <div class="view-thing">
-                    View style 1
-                </div>
-                <div class="view-thing">
-                    View style 2
-                </div>
-                <div class="view-thing">
-                    View style 3
-                </div>
             </div>
             <div class="tree-view">
                 {% include "treeview.html" %}
@@ -111,8 +105,15 @@
             </div>
         </div>
     
-        <div id="main-view">
-            {{ main_view|safe }}
+    
+        <div class="container">
+            
+            <div id="tag-input-wrapper" style="display: flex; flex-wrap: wrap; gap: 5px; padding: 10px; border: 1px solid #ccc; margin-top: 10px;">
+                <input type="text" id="container-input" placeholder="Search by typing an attribute name or value, or filter by typing <attribute> <operand> <value>" style="width: 100%; padding: 10px 10px 10px 0px; font-size: 16px; border: 1px solid #ccc; margin-top: 10px;">
+            </div>
+            <div id="main-view">
+                {{ main_view|safe }}
+            </div>
         </div>
 
         <button onclick="toggleCLI()" style="position: fixed; bottom: 40px; left: 20px; z-index: 9999;">
@@ -161,6 +162,66 @@
                     this.value = '';
                 }
             });
+
+        const input = document.getElementById('container-input');
+        const wrapper = document.getElementById('tag-input-wrapper');
+
+        input.addEventListener('keydown', function(event) {
+            if (event.key === 'Enter') {
+                let callback;
+                event.preventDefault();
+                let value = this.value.trim();
+                if (value === '') return;
+
+                let splitValue = value.split(" ");
+                let valid = true;
+                
+                if (splitValue.length === 1) {
+                    value = "search " + splitValue[0]
+                    callback = fetch('/search/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': '{{ csrf_token }}'
+                        },
+                        body: JSON.stringify({ value: value })
+                    })
+                } else if (splitValue.length === 3) {
+                    value = "filter " + splitValue[0] + " " + splitValue[1] + " " + splitValue[2]
+                    let allowedOperands = [">=", "<=", "==", "!=", ">", "<"]
+                    if (allowedOperands.includes(splitValue[1])) {
+                        callback = fetch('/filter/', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRFToken': '{{ csrf_token }}'
+                            },
+                            body: JSON.stringify({ value: value })
+                        })
+                    }
+                } else {
+                    alert('Invalid search or filtering attempt!')
+                    valid = false;
+                }
+
+                if (valid) {
+                    callback.then(console.log("yay"))
+
+                    const tag = document.createElement('div');
+                    tag.textContent = value;
+                    tag.style.padding = '5px 10px';
+                    tag.style.background = 'lightgray';
+                    tag.style.borderRadius = '20px';
+                    tag.style.display = 'inline-flex';
+                    tag.style.alignItems = 'center';
+                    tag.style.gap = '5px';
+
+                    wrapper.insertBefore(tag, input);
+                    this.value = '';
+                }
+                
+            }
+        });
         </script>
     </body>
 </html>

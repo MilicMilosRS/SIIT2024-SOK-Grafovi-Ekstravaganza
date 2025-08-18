@@ -51,6 +51,32 @@ def run_command(request):
     return JsonResponse({"output": "Invalid method"}, status=405)
 
 @csrf_exempt
+def search_graph(request):
+    if request.method == "POST":
+        try:
+            data = json.loads(request.body)
+            search_filter = data.get("value", "")
+        except Exception:
+            return JsonResponse({"output": "Invalid request"}, status=400)
+        
+        html = cli_instance.process_command("search " + search_filter)
+        context = {"main_view": html}
+        print(context)
+    return render(request, 'index.html', context)
+
+@csrf_exempt
+def filter_graph(request):
+    if request.method == "POST":
+        try:
+            data = json.loads(request.body)
+            filter_filter = data.get("value", "")
+        except Exception:
+            return JsonResponse({"output": "Invalid request"}, status=400)
+    
+        html = cli_instance.process_command("filter " + filter_filter)
+    return JsonResponse({"main_view": html})
+
+@csrf_exempt
 def partial_graph_view(request):
     html = platform.generate_main_view()
     return HttpResponse(html)
