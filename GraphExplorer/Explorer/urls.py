@@ -8,6 +8,7 @@ urlpatterns = [
     path('partial-graph', views.partial_graph_view, name='partial_graph'),
     path('treeview/updates', views.sse_treeview_updates, name='treeview_updates'),
     path('treeview/expand', views.expand_treeview_node, name='expand_treeview'),
+    path('treeview/collapse', views.collapse_treeview_node, name='expand_treeview'),
     path('select/<str:item_id>/', views.select_node, name='select_node'),
     path('deselect/', views.deselect_node, name='deselect_node')
 ]
