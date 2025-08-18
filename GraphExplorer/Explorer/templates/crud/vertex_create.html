@@ -1,0 +1,127 @@
+<style>
+    dialog{
+        background-color: #fad7a0;
+        border-radius: 20px;
+        border: solid black 3px;
+    }
+</style>
+<h2>Create New Vertex</h2>
+<form method="dialog" id="vertexForm">
+    <label>
+        Vertex ID:
+        <input type="text" id="vertexId" name="id" required>
+    </label>
+
+    <div id="attr-container"></div>
+
+    <button type="button" onclick="addAttribute()">+ Add Attribute</button>
+    <hr>
+    <div id="fetchError" style="color:red; margin-top:10px; display:none;"></div>
+
+    <menu>
+        <button type="reset" onclick="this.closest('dialog').close()">Cancel</button>
+        <button type="submit">Create</button>
+    </menu>
+</form>
+
+<script>
+    let attrCount = 0;
+
+    function resetVertexDialog() {
+    const form = document.getElementById('vertexForm');
+    const container = document.getElementById('attr-container');
+        form.reset();
+        container.innerHTML = "";
+        attrCount = 0;
+    }
+
+    // Watch for when dialog "open" attribute changes
+    const dlg = document.getElementById('vertexDialog');
+    const observer = new MutationObserver(() => {
+        if (dlg.hasAttribute('open')) {
+            resetVertexDialog();
+        }
+    });
+    observer.observe(dlg, { attributes: true, attributeFilter: ['open'] });
+
+    function addAttribute() {
+        attrCount++;
+        const container = document.getElementById('attr-container');
+
+        const row = document.createElement('div');
+        row.className = 'attr-row';
+        row.innerHTML = `
+            <input type="text" name="attrName${attrCount}" placeholder="Name" required>
+            <select name="attrType${attrCount}" onchange="changeAttrType(this, ${attrCount})">
+            <option value="string">String</option>
+            <option value="number">Number</option>
+            <option value="date">Date</option>
+            </select>
+            <input type="text" name="attrValue${attrCount}" placeholder="Value" required>
+            <button type="button" onclick="this.parentElement.remove()">✖</button>
+        `;
+        container.appendChild(row);
+    }
+
+    function changeAttrType(select, count) {
+        const valueInput = select.parentElement.querySelector(`[name="attrValue${count}"]`);
+        if (select.value === "number") {
+            valueInput.type = "number";
+            valueInput.value = "";
+        } else if (select.value === "date") {
+            valueInput.type = "date";
+            valueInput.value = "";
+        } else {
+            valueInput.type = "text";
+            valueInput.value = "";
+        }
+    }
+
+    document.getElementById('vertexForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        const formData = new FormData(this);
+        const vertex = {
+            id: formData.get("id"),
+            attributes: {}
+        };
+
+        // Collect dynamic attributes
+        for (let [key, val] of formData.entries()) {
+            if (key.startsWith("attrName")) {
+            const index = key.replace("attrName", "");
+            const name = val;
+            const type = formData.get("attrType" + index);
+            let value = formData.get("attrValue" + index);
+
+            // cast number/date if needed
+            if (type === "number") value = Number(value);
+            if (type === "date") value = new Date(value);
+
+            vertex.attributes[name] = value;
+            }
+        }
+
+        const errorDiv = document.getElementById('fetchError');
+        errorDiv.style.display = 'none'; // hide previous errors
+
+        fetch("api/vertex/create/", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(vertex)
+        })
+        .then(res => {
+            if(res.ok){
+                this.closest('dialog').close();
+            }
+            else if (res.status == 409){
+                errorDiv.innerHTML = "Vertex with given id already exists"
+            } else{
+                errorDiv.innerHTML = "Bad request"
+            }
+
+        })
+
+        this.closest('dialog').close();
+    });
+</script>

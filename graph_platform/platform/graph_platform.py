@@ -24,17 +24,22 @@ class Platform():
         self.forestView.graph_updated()
         for func in self.graph_update_listeners:
             func()
+        self.visualizer.revisualize_graph(self.graph)
 
     #Graph stuff
     def add_vertex(self, vertex: Node) -> bool:
-        self.graph.add_vertex(vertex)
+        if not self.graph.add_vertex(vertex):
+            return False
         self.visualizer.add_node(vertex)
         self._graph_updated()
+        return True
 
     def edit_vertex(self, vertex: Node) -> bool:
-        self.graph.edit_vertex(vertex)
+        if not self.graph.edit_vertex(vertex):
+            return False
         self.visualizer.edit_node(vertex)
         self._graph_updated()
+        return True
 
     def create_vertex(self) -> Node:
         node = self.graph.create_vertex()
@@ -43,7 +48,7 @@ class Platform():
         return node
     
     def delete_vertex(self, vertex: Node) -> None:
-        self.delete_vertex(vertex)
+        self.graph.delete_vertex(vertex)
         self.visualizer.remove_node(vertex)
         self._graph_updated()
     
