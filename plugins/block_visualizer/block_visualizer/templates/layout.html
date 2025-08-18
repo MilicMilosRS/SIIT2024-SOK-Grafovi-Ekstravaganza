@@ -103,6 +103,7 @@
                     'Content-Type': 'application/json',
                 }
             })
+            .finally(() => {document.dispatchEvent(new CustomEvent("nodeSelectionChanged"))})
         });
 
         function nodeToHTML(node){
@@ -147,6 +148,7 @@
                             'Content-Type': 'application/json',
                         }
                     })
+                    .finally(() => {document.dispatchEvent(new CustomEvent("nodeSelectionChanged"))})
                     event.stopPropagation();
                 });
 

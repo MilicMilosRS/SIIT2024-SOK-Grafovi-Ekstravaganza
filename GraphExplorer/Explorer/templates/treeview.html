@@ -115,6 +115,7 @@
                         'Content-Type': 'application/json',
                     }
                 })
+                .finally(() => {document.dispatchEvent(new CustomEvent("nodeSelectionChanged"));})
             })
 
             // Create toggle button
