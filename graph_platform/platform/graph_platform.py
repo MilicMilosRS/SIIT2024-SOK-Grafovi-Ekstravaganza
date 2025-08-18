@@ -27,9 +27,11 @@ class Platform():
 
     #Graph stuff
     def add_vertex(self, vertex: Node) -> bool:
-        self.graph.add_vertex(vertex)
+        if not self.graph.add_vertex(vertex):
+            return False
         self.visualizer.add_node(vertex)
         self._graph_updated()
+        return True
 
     def edit_vertex(self, vertex: Node) -> bool:
         self.graph.edit_vertex(vertex)

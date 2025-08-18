@@ -43,6 +43,7 @@ class Graph(object):
             return False
         
         self._vertices[vertex.get_id()] = vertex
+        return True
 
     def edit_vertex(self, vertex: Node) -> bool:
         vid = vertex.get_id()
