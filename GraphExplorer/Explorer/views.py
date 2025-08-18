@@ -173,3 +173,25 @@ def create_vertex(request):
             return JsonResponse({"output": "Invalid request"}, status=400)
 
     return JsonResponse({"output": "Invalid method"}, status=405)
+
+@csrf_exempt
+def delete_vertex(request):
+    if request.method == "DELETE":
+        try:
+            data = json.loads(request.body)
+            id = data.get("id")
+            print(id)
+            if id is None:
+                return JsonResponse({"output": "No ID provided"}, status=400)
+            
+            node = platform.graph._vertices.get(id)
+            if node is None:
+                return JsonResponse({"output": "Node with that id doesn't exist"}, status=404)
+            
+            platform.delete_vertex(node)
+            return JsonResponse({}, status=200)
+
+        except Exception:
+            return JsonResponse({"output": "Invalid request"}, status=400)
+
+    return JsonResponse({"output": "Invalid method"}, status=405)

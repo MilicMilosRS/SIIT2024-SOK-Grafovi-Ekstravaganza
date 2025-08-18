@@ -45,7 +45,7 @@ class Platform():
         return node
     
     def delete_vertex(self, vertex: Node) -> None:
-        self.delete_vertex(vertex)
+        self.graph.delete_vertex(vertex)
         self.visualizer.remove_node(vertex)
         self._graph_updated()
     

@@ -17,7 +17,7 @@
 <div class="toolbar_container">
     <button id="toolbar-create-vertex" class="crudButton" onclick="document.getElementById('vertexDialog').showModal()">Create Vertex</button>
     <button id="toolbar-edit" class="crudButton">Edit</button>
-    <button id="toolbar-delete" class="crudButton">Delete</button>
+    <button id="toolbar-delete" class="crudButton" onclick="deleteSelected()">Delete</button>
 
     <dialog id="vertexDialog">
         {% include 'crud/vertex.html' %}
@@ -39,8 +39,24 @@
             deleteBtn.disabled = true;
         }
 
+        function deleteSelected(){
+            if(selectedNode){
+                fetch("api/vertex/delete/", {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        'id': selectedNode.id
+                    })
+                })
+                .then(res => {
+                    document.dispatchEvent(new CustomEvent("nodeSelectionChanged"))
+                })
+            }
+        }
+
         function fetchSelectedNode(){
-            selectedNode = null;
             fetch("select/", {
                 method: 'GET',
                 headers: {
@@ -49,14 +65,21 @@
             })
             .then(res => {
                 if (res.ok){
-                    selectedNode = res.json()
-                    nodeSelected()
+                    return res.json()
                 }
                 else{
-                    nodeDeselected()
+                    throw new Error("Bad request")
                 }
             })
-            .catch( () => {nodeDeselected()})
+            .then(data => {
+                selectedNode = data.node
+                console.log(selectedNode)
+                nodeSelected()
+            })
+            .catch( () => {
+                    selectedNode = null
+                nodeDeselected()
+            })
         }
 
         document.addEventListener("nodeSelectionChanged", fetchSelectedNode)
