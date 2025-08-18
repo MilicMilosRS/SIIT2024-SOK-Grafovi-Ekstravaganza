@@ -48,9 +48,11 @@ class Graph(object):
     def edit_vertex(self, vertex: Node) -> bool:
         vid = vertex.get_id()
         if vid not in self._vertices:
-            return ("ERROR: That node/edge doesn't exist in the graph.")
+            return False
     
         existing_node = self._vertices[vid]
+        existing_node._attributes.clear()
+        existing_node._attributes["id"] = vid
         for key,value in vertex.get_attributes().items():
             if key != 'id':
                 existing_node.set_attribute(key, value)

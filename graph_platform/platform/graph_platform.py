@@ -24,6 +24,7 @@ class Platform():
         self.forestView.graph_updated()
         for func in self.graph_update_listeners:
             func()
+        self.visualizer.revisualize_graph(self.graph)
 
     #Graph stuff
     def add_vertex(self, vertex: Node) -> bool:
@@ -34,9 +35,11 @@ class Platform():
         return True
 
     def edit_vertex(self, vertex: Node) -> bool:
-        self.graph.edit_vertex(vertex)
+        if not self.graph.edit_vertex(vertex):
+            return False
         self.visualizer.edit_node(vertex)
         self._graph_updated()
+        return True
 
     def create_vertex(self) -> Node:
         node = self.graph.create_vertex()
