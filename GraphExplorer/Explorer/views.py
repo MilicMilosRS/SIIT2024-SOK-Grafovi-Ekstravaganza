@@ -175,6 +175,30 @@ def create_vertex(request):
     return JsonResponse({"output": "Invalid method"}, status=405)
 
 @csrf_exempt
+def edit_vertex(request):
+    if request.method == "PUT":
+        try:
+            data = json.loads(request.body)
+            id = data.get("id")
+            if id is None:
+                raise Exception("No id")
+
+            attrs = data.get("attributes")
+            n = Node(id)
+            if attrs is not None:
+                for attr_name, attr_value in attrs.items():
+                    n.set_attribute(attr_name, attr_value)
+            if platform.edit_vertex(n):
+                return JsonResponse({}, status=200)
+
+            return JsonResponse({}, status=409)
+
+        except Exception:
+            return JsonResponse({"output": "Invalid request"}, status=400)
+
+    return JsonResponse({"output": "Invalid method"}, status=405)
+
+@csrf_exempt
 def delete_vertex(request):
     if request.method == "DELETE":
         try:

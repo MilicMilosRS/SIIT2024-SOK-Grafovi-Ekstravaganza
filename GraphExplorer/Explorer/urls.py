@@ -14,5 +14,6 @@ urlpatterns = [
     path('deselect/', views.deselect_node, name='deselect_node'),
 
     path('api/vertex/create/', views.create_vertex, name="create_vertex"),
+    path('api/vertex/edit/', views.edit_vertex, name="edit_vertex"),
     path('api/vertex/delete/', views.delete_vertex, name="delete_vertex"),
 ]
