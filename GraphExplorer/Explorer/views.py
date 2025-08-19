@@ -75,6 +75,24 @@ def filter_graph(request):
     return JsonResponse({"main_view": html})
 
 @csrf_exempt
+def get_filters(request):
+    if request.method == "POST":
+        filters = platform.get_filters()
+        serialized_filters = []
+        for filter in filters:
+            serialized_filters.append(filter.serialize())
+        json_filters = json.dumps([{"attribute": obj["attribute"], "type": obj["type"], "value":obj["value"]} for obj in serialized_filters])
+    return JsonResponse({"filters": serialized_filters})
+
+@csrf_exempt
+def remove_filter(request):
+    if request.method == "POST":
+        data = json.loads(request.body)
+        index = data.get("index", "")
+        platform.remove_filter(index)
+    return JsonResponse({"success": True})
+
+@csrf_exempt
 def partial_graph_view(request):
     html = platform.generate_main_view()
     return HttpResponse(html)

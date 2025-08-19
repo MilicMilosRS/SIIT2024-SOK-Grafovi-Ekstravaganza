@@ -203,3 +203,6 @@ class Filter():
     
     def __getitem__(self, key):
         return getattr(self, key)
+    
+    def serialize(self):
+        return {"value": self.value, "type": self.type, "attribute": self.attribute}

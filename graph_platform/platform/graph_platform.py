@@ -119,6 +119,9 @@ class Platform():
         self.visualizer.on_selection_changed(None)
 
     #Filter stuff
+    def get_filters(self):
+        return self.graph._filters
+
     def add_filter(self, filter):
         self.graph.add_filter(filter)
         self._graph_updated()

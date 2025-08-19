@@ -13,4 +13,6 @@ urlpatterns = [
     path('deselect/', views.deselect_node, name='deselect_node'),
     path('search/', views.search_graph, name="search"),
     path('filter/', views.filter_graph, name="filter"),
+    path('get-filters', views.get_filters, name="get_filters"),
+    path('remove-filter', views.remove_filter, name="remove_filter"),
 ]

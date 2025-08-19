@@ -126,6 +126,7 @@
         </div>
 
         <script>
+            var actualFilters;
             function toggleCLI() {
                 const cli = document.getElementById('cli-container');
                 cli.style.display = (cli.style.display === 'none') ? 'block' : 'none';
@@ -205,8 +206,6 @@
                 }
 
                 if (valid) {
-                    callback.then(console.log("yay"))
-
                     const tag = document.createElement('div');
                     tag.textContent = value;
                     tag.style.padding = '5px 10px';
@@ -216,12 +215,91 @@
                     tag.style.alignItems = 'center';
                     tag.style.gap = '5px';
 
+                    let currentTagCount = wrapper.querySelectorAll('div').length;
+
+                    const closeButton = document.createElement('span');
+                        closeButton.textContent = 'X';
+                        closeButton.style.cursor = 'pointer';
+                        closeButton.style.padding = '0 5px';
+                        closeButton.style.background = 'red';
+                        closeButton.style.color = 'white';
+                        closeButton.style.borderRadius = '50%';
+                        closeButton.style.fontWeight = 'bold';
+
+                        tag.appendChild(closeButton);
+
+                        closeButton.addEventListener('click', function() {
+                            fetch('remove-filter', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'X-CSRFToken': '{{ csrf_token }}' },
+                                    body: JSON.stringify({index: currentTagCount})
+                            }).then(tag.remove())
+                        });
+
                     wrapper.insertBefore(tag, input);
                     this.value = '';
                 }
                 
             }
         });
+        
+            function getFilters() {
+                fetch('get-filters', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': '{{ csrf_token }}' }
+                }).then(res => res.json())
+                .then(filters => {
+                    actualFilters = filters.filters
+                    for (let index = 0; index < actualFilters.length; index++) {
+                        let filter = actualFilters[index];
+                        actualFilters[index].index = index;
+                        let value = ""
+                        if (filter.type === "search") {
+                            value = "search " + filter.attribute
+                        } else {
+                            value = "filter " + filter.attribute + " " + filter.type + " " + filter.value
+                        }
+                        const tag = document.createElement('div');
+                        tag.textContent = value;
+                        tag.style.padding = '5px 10px';
+                        tag.style.background = 'lightgray';
+                        tag.style.borderRadius = '20px';
+                        tag.style.display = 'inline-flex';
+                        tag.style.alignItems = 'center';
+                        tag.style.gap = '5px';
+
+                        const closeButton = document.createElement('span');
+                        closeButton.textContent = 'X';
+                        closeButton.style.cursor = 'pointer';
+                        closeButton.style.padding = '0 5px';
+                        closeButton.style.background = 'red';
+                        closeButton.style.color = 'white';
+                        closeButton.style.borderRadius = '50%';
+                        closeButton.style.fontWeight = 'bold';
+
+                        tag.appendChild(closeButton);
+
+                        closeButton.addEventListener('click', function() {
+                            fetch('remove-filter', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'X-CSRFToken': '{{ csrf_token }}' },
+                                    body: JSON.stringify({index: actualFilters[index].index})
+                            }).then(tag.remove())
+                        });
+
+                        wrapper.insertBefore(tag, input);
+                        this.value = '';
+                    }
+                })
+            }
+            getFilters();
+        
         </script>
     </body>
 </html>
