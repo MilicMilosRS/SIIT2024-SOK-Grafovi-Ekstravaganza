@@ -37,6 +37,9 @@ class Graph(object):
         #Example: node1_id: {node2_id: {EDGE ATTRIBUTES}, node3_id: {EDGE ATTRIBUTES}}
         self._edges = {}
         self._is_directed = directed
+        self._filters = []
+        self._filtered_vertices = {}
+        self._filtered_edges = {}
 
     def add_vertex(self, vertex: Node) -> bool:
         if vertex.get_id() in self._vertices:
@@ -153,6 +156,20 @@ class Graph(object):
                     incoming.append(self._vertices[src_id])
         
         return (outgoing, incoming)
+    
+    def add_filter(self, filter):
+        self._filters.append(filter)
+
+    def remove_filter(self, index: int):
+        index = int(index)
+        if (index < 0 or index >= len(self._filters)):
+            return False
+        self._filters.pop(index)
+        return True
+
+    def get_filters(self):
+        return self._filters
+        
 
 class GraphVisualizer(ABC):
     #Returns a string representing an HTML DOM visualization of the provided graph

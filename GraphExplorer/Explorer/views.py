@@ -51,6 +51,49 @@ def run_command(request):
     return JsonResponse({"output": "Invalid method"}, status=405)
 
 @csrf_exempt
+def search_graph(request):
+    if request.method == "POST":
+        try:
+            data = json.loads(request.body)
+            search_filter = data.get("value", "")
+        except Exception:
+            return JsonResponse({"output": "Invalid request"}, status=400)
+        
+        cli_instance.process_command(search_filter)
+    return JsonResponse({"success": True})
+
+@csrf_exempt
+def filter_graph(request):
+    if request.method == "POST":
+        try:
+            data = json.loads(request.body)
+            filter_filter = data.get("value", "")
+        except Exception:
+            return JsonResponse({"output": "Invalid request"}, status=400)
+    
+        html = cli_instance.process_command(filter_filter)
+    return JsonResponse({"main_view": html})
+
+@csrf_exempt
+def get_filters(request):
+    if request.method == "POST":
+        filters = platform.get_filters()
+        serialized_filters = []
+        for filter in filters:
+            serialized_filters.append(filter.serialize())
+        if len(serialized_filters) != 0:
+            platform.update_graph_view()
+    return JsonResponse({"filters": serialized_filters})
+
+@csrf_exempt
+def remove_filter(request):
+    if request.method == "POST":
+        data = json.loads(request.body)
+        index = data.get("index", "")
+        platform.remove_filter(index)
+    return JsonResponse({"success": True})
+
+@csrf_exempt
 def partial_graph_view(request):
     html = platform.generate_main_view()
     return HttpResponse(html)

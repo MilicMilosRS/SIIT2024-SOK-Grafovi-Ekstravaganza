@@ -2,14 +2,24 @@ from collections.abc import Callable
 import json
 from graph_api import Graph, GraphVisualizer, Node
 from TreeVIew.tree_view import TreeNode, ForestView
+from operator import eq, ne, gt, lt, ge, le
 
 class Platform():
     def __init__(self, graph: Graph = Graph(False), visualizer: GraphVisualizer = None):
         self.graph_update_listeners = []
         self.graph = graph
+        self._filtered_graph = graph
         self.visualizer = visualizer
         self.forestView = ForestView(graph)
         self.selected_node = None
+        self.operands = {
+            "eq": eq,
+            "ne": ne,
+            "gt": gt,
+            "lt": lt,
+            "ge": ge,
+            "le": le,
+        }
 
     #Graph update listener stuff
     def attach_update_listener(self, func: Callable[[None],None]):
@@ -112,3 +122,66 @@ class Platform():
         self.selected_node = None
         self._graph_updated()
         self.visualizer.on_selection_changed(None)
+
+    #Filter stuff
+
+    def update_graph_view(self):
+        self._graph_updated()
+        self._create_filtered_graph()
+        self.forestView = ForestView(self._filtered_graph)
+        self.visualizer.revisualize_graph(self._filtered_graph)
+
+    def get_filters(self):
+        return self.graph._filters
+
+    def add_filter(self, filter):
+        self.graph.add_filter(filter)
+        self.update_graph_view()
+
+    def remove_filter(self, index: int):
+        self.graph.remove_filter(index)
+        self.update_graph_view()
+    
+    def _create_filtered_graph(self):
+        self._filtered_graph = Graph(self.graph._is_directed)
+
+        for node_id, attrs in self.graph._vertices.items():
+            node = Node(node_id)
+            for key, value in attrs._attributes.items():
+                if (key == 'id'):
+                    continue
+                node.set_attribute(key, value)
+            
+            self._filtered_graph.add_vertex(node)
+
+        print(self.graph._filters)
+
+        for filter in self.graph._filters:
+            if filter.type == "search":
+                self._filtered_graph._vertices = {
+                    key: node for key, node in self._filtered_graph._vertices.items()
+                    if any(filter.attribute in str(k) or filter.attribute in str(v)
+                        for k, v in node._attributes.items()) }           
+            else:
+                attr = filter.attribute
+                operand = self.operands[filter.type]
+                value = filter.value
+                # for key, node in self._filtered_graph._vertices.items():
+                    # print(node._attributes)
+                    # print(attr)
+                    # print(attr in node._attributes)
+                self._filtered_graph._vertices = {
+                    key: node for key, node in self._filtered_graph._vertices.items()
+                    if attr in node._attributes and operand(node[attr], value)
+                }
+                
+            
+        node_mapping = {}
+        for node_id, node in self.graph._vertices.items():
+            node_mapping[node_id] = node
+
+        for source, targets in self.graph._edges.items():
+            if source in node_mapping:
+                for target in targets:
+                    if target in node_mapping:
+                        self._filtered_graph.create_edge(node_mapping[source].get_id(), node_mapping[target].get_id())
