@@ -59,7 +59,7 @@ def search_graph(request):
         except Exception:
             return JsonResponse({"output": "Invalid request"}, status=400)
         
-        cli_instance.process_command("search " + search_filter)
+        cli_instance.process_command(search_filter)
     return JsonResponse({"success": True})
 
 @csrf_exempt
@@ -71,7 +71,7 @@ def filter_graph(request):
         except Exception:
             return JsonResponse({"output": "Invalid request"}, status=400)
     
-        html = cli_instance.process_command("filter " + filter_filter)
+        html = cli_instance.process_command(filter_filter)
     return JsonResponse({"main_view": html})
 
 @csrf_exempt

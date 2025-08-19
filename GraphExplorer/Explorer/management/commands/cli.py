@@ -89,20 +89,23 @@ class CommandLine():
             return "ERROR: Invalid delete command."
 
     def handle_filter(self,arg):
-        command: str = arg[1] + " " + arg[2] + " " + arg[3]
+        command: str = arg[0] + " " + arg[1] + " " + arg[2]
         command = command.strip()
-        print(command)
         new_filter = Filter(command)
-        return self.platform.add_filter(new_filter)
+        self.platform.add_filter(new_filter)
+        return f"Successfully added range filter"
         
     
     def handle_search(self,arg):
-        command = arg[1]
+        command = arg[0]
         new_filter = Filter(command)
-        return self.platform.add_filter(new_filter)
+        self.platform.add_filter(new_filter)
+        return f"Successfully added search filter"
 
     def handle_clear(self,arg):
-        pass
+        index = arg[0]
+        self.platform.remove_filter(index)
+        return f"Successfully removed filter"
 
     def handle_save(self, args=None):
         try:
