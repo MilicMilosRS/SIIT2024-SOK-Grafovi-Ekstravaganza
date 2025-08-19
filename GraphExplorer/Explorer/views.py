@@ -176,9 +176,88 @@ def select_node(request, item_id):
     return JsonResponse({"output": "Invalid method"}, status=405)
 
 @csrf_exempt
+def get_selected_node(request):
+    if request.method == "GET":
+        if platform.selected_node is None:
+            return JsonResponse({}, status=404)
+        return JsonResponse({"node": platform.selected_node._attributes}, status=200)
+
+    return JsonResponse({"output": "Invalid method"}, status=405)
+
+@csrf_exempt
 def deselect_node(request):
     if request.method == "POST":
         platform.deselect_node()
         return JsonResponse({}, status=200)
+
+    return JsonResponse({"output": "Invalid method"}, status=405)
+
+#CRUD STUFF
+@csrf_exempt
+def create_vertex(request):
+    if request.method == "POST":
+        try:
+            data = json.loads(request.body)
+            id = data.get("id")
+            if id is None:
+                raise Exception("No id")
+
+            attrs = data.get("attributes")
+            n = Node(id)
+            if attrs is not None:
+                for attr_name, attr_value in attrs.items():
+                    n.set_attribute(attr_name, attr_value)
+            if platform.add_vertex(n):
+                return JsonResponse({}, status=200)
+            return JsonResponse({}, status=409)
+
+        except Exception:
+            return JsonResponse({"output": "Invalid request"}, status=400)
+
+    return JsonResponse({"output": "Invalid method"}, status=405)
+
+@csrf_exempt
+def edit_vertex(request):
+    if request.method == "PUT":
+        try:
+            data = json.loads(request.body)
+            id = data.get("id")
+            if id is None:
+                raise Exception("No id")
+
+            attrs = data.get("attributes")
+            n = Node(id)
+            if attrs is not None:
+                for attr_name, attr_value in attrs.items():
+                    n.set_attribute(attr_name, attr_value)
+            if platform.edit_vertex(n):
+                return JsonResponse({}, status=200)
+
+            return JsonResponse({}, status=409)
+
+        except Exception:
+            return JsonResponse({"output": "Invalid request"}, status=400)
+
+    return JsonResponse({"output": "Invalid method"}, status=405)
+
+@csrf_exempt
+def delete_vertex(request):
+    if request.method == "DELETE":
+        try:
+            data = json.loads(request.body)
+            id = data.get("id")
+            print(id)
+            if id is None:
+                return JsonResponse({"output": "No ID provided"}, status=400)
+            
+            node = platform.graph._vertices.get(id)
+            if node is None:
+                return JsonResponse({"output": "Node with that id doesn't exist"}, status=404)
+            
+            platform.delete_vertex(node)
+            return JsonResponse({}, status=200)
+
+        except Exception:
+            return JsonResponse({"output": "Invalid request"}, status=400)
 
     return JsonResponse({"output": "Invalid method"}, status=405)

@@ -1,0 +1,91 @@
+<style>
+    .toolbar_container{
+        width: 100%;
+        height: fit-content;
+        display: flex;
+        gap: 10px;
+        padding: 10px;
+    }
+
+    .crudButton{
+        padding: 5px;
+        background-color: rgba(255, 255, 255, 0.205);
+        border: solid black 2px;
+        border-radius: 15px;
+    }
+</style>
+<div class="toolbar_container">
+    <button id="toolbar-create-vertex" class="crudButton" onclick="document.getElementById('vertexDialog').showModal()">Create Vertex</button>
+    <button id="toolbar-edit" class="crudButton" onclick="openVertexEditDialog(selectedNode)">Edit</button>
+    <button id="toolbar-delete" class="crudButton" onclick="deleteSelected()">Delete</button>
+
+    <dialog id="vertexDialog">
+        {% include 'crud/vertex_create.html' %}
+    </dialog>
+    
+    <dialog id="vertexEditDialog">
+        {% include 'crud/vertex_edit.html' %}
+    </dialog>
+
+    <script>
+        let selectedNode = null;
+        let createVertexBtn = document.getElementById("toolbar-create-vertex")
+        let editBtn = document.getElementById("toolbar-edit")
+        let deleteBtn = document.getElementById("toolbar-delete")
+
+        function nodeSelected(){
+            editBtn.disabled = false;
+            deleteBtn.disabled = false;
+        }
+
+        function nodeDeselected(){
+            editBtn.disabled = true;
+            deleteBtn.disabled = true;
+        }
+
+        function deleteSelected(){
+            if(selectedNode){
+                fetch("api/vertex/delete/", {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        'id': selectedNode.id
+                    })
+                })
+                .then(res => {
+                    document.dispatchEvent(new CustomEvent("nodeSelectionChanged"))
+                })
+            }
+        }
+
+        function fetchSelectedNode(){
+            fetch("select/", {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(res => {
+                if (res.ok){
+                    return res.json()
+                }
+                else{
+                    throw new Error("Bad request")
+                }
+            })
+            .then(data => {
+                selectedNode = data.node
+                nodeSelected()
+            })
+            .catch( () => {
+                    selectedNode = null
+                nodeDeselected()
+            })
+        }
+
+        document.addEventListener("nodeSelectionChanged", fetchSelectedNode)
+        fetchSelectedNode()
+    </script>
+</div>

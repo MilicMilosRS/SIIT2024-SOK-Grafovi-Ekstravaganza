@@ -103,13 +103,14 @@
                     'Content-Type': 'application/json',
                 }
             })
+            .finally(() => {document.dispatchEvent(new CustomEvent("nodeSelectionChanged"))})
         });
 
         function nodeToHTML(node){
             let html = `<div class='node-head'>${node.id}</div>`;
-            let attrHTML = Object.keys(node)
+            let attrHTML = Object.keys(node.attributes)
                 .filter(k => k !== "id")
-                .map(k => `<p style='white-space:nowrap'>${k}: ${node[k]}</p>`).join("<br/>");
+                .map(k => `<p style='white-space:nowrap'>${k}: ${node.attributes[k]}</p>`).join("<br/>");
             html += `<div class='node-body'>${attrHTML}</div>`;
             return html;
         }
@@ -147,6 +148,7 @@
                             'Content-Type': 'application/json',
                         }
                     })
+                    .finally(() => {document.dispatchEvent(new CustomEvent("nodeSelectionChanged"))})
                     event.stopPropagation();
                 });
 
@@ -168,6 +170,10 @@
             nodeElements.attr("width", d => d.width)
                         .attr("height", d => d.height);
 
+            // Refresh HTML of all node divs (important for updates)
+            nodeElements.select("div")
+                .html(d => nodeToHTML(d));
+                    
             // Simulation
             if (!simulation) {
                 simulation = d3.forceSimulation(nodes)
@@ -184,22 +190,28 @@
 
         function revisualize(newNodes, newLinks) {
             // === 1. Reconcile nodes ===
-            const newNodeIds = newNodes.map(n => n.id);
+            const newNodeIds = newNodes.map(n => n.attributes.id);
 
             // Remove nodes no longer present
             nodes = nodes.filter(n => newNodeIds.includes(n.id));
 
             // Add or update nodes
             newNodes.forEach(n => {
-                let existing = nodes.find(x => x.id === n.id);
+                let existing = nodes.find(x => x.id === n.attributes.id);
                 if (existing) {
+                    console.log(existing)
+                    console.log(n)
                     // Update attributes without overwriting x/y
-                    Object.keys(n).forEach(k => { if (k !== "x" && k !== "y") existing[k] = n[k]; });
+                    existing.attributes = {}
+                    Object.keys(n.attributes).forEach(k => { existing.attributes[k] = n.attributes[k]; console.log(k) });
                 } else {
                     // New node: assign random x/y
-                    let node = { ...n };
-                    node.x = node.x !== undefined ? node.x : Math.random() * 500 + 50;
-                    node.y = node.y !== undefined ? node.y : Math.random() * 500 + 50;
+                    let node = {
+                        id: n.attributes?.id ?? n.id,
+                        attributes: { ...n.attributes },   // <-- ensure it's always an object
+                        x: n.x ?? (Math.random() * 500 + 50),
+                        y: n.y ?? (Math.random() * 500 + 50)
+                    };
                     nodes.push(node);
                 }
             });
@@ -335,10 +347,6 @@
         socket.onerror = () => console.log("Error connecting websocket")
         socket.onmessage = (event) => {
             let msg = JSON.parse(event.data);
-            if (msg.action === "addNode") addNode(msg.node);
-            if (msg.action === "removeNode") removeNode(msg.id);
-            if (msg.action === "addLink") addLink(msg.source, msg.target, msg.attrs);
-            if (msg.action === "removeLink") removeLink(msg.source, msg.target);
             if (msg.action === "setDirected") isDirected = msg.value;
             if (msg.action === "selectNode") selectNode(msg.node_id);
             if (msg.action === "deselectNode") deselectNodes();
