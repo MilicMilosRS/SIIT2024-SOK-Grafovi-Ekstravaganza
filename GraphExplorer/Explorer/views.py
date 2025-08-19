@@ -81,7 +81,8 @@ def get_filters(request):
         serialized_filters = []
         for filter in filters:
             serialized_filters.append(filter.serialize())
-        json_filters = json.dumps([{"attribute": obj["attribute"], "type": obj["type"], "value":obj["value"]} for obj in serialized_filters])
+        if len(serialized_filters) != 0:
+            platform.update_graph_view()
     return JsonResponse({"filters": serialized_filters})
 
 @csrf_exempt

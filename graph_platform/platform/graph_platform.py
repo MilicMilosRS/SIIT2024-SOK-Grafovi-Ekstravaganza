@@ -124,22 +124,23 @@ class Platform():
         self.visualizer.on_selection_changed(None)
 
     #Filter stuff
+
+    def update_graph_view(self):
+        self._graph_updated()
+        self._create_filtered_graph()
+        self.forestView = ForestView(self._filtered_graph)
+        self.visualizer.revisualize_graph(self._filtered_graph)
+
     def get_filters(self):
         return self.graph._filters
 
     def add_filter(self, filter):
         self.graph.add_filter(filter)
-        self._graph_updated()
-        self._create_filtered_graph()
-        self.forestView = ForestView(self._filtered_graph)
-        self.visualizer.revisualize_graph(self._filtered_graph)
+        self.update_graph_view()
 
     def remove_filter(self, index: int):
         self.graph.remove_filter(index)
-        self._graph_updated()
-        self._create_filtered_graph()
-        self.forestView = ForestView(self._filtered_graph)
-        self.visualizer.revisualize_graph(self._filtered_graph)
+        self.update_graph_view()
     
     def _create_filtered_graph(self):
         self._filtered_graph = Graph(self.graph._is_directed)

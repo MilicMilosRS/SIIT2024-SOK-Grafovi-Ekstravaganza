@@ -161,6 +161,7 @@ class Graph(object):
         self._filters.append(filter)
 
     def remove_filter(self, index: int):
+        index = int(index)
         if (index < 0 or index >= len(self._filters)):
             return False
         self._filters.pop(index)
