@@ -21,158 +21,349 @@
             margin: 3px;
         }
 
+        .node-selected .node-head{
+            background-color:rgb(0, 16, 109);
+            color: white;
+            border-color: rgb(0, 16, 109);
+        }
+
+        .node-selected .node-body{
+            background-color:rgb(182, 193, 255);
+            border-color: rgb(0, 16, 109);
+        }
+
+        .node-head {
+            padding:10px;
+            border:1px solid black;
+            text-align:center;
+            background-color:orange;
+            border-radius:10px 10px 0px 0px;
+        }
+        
+        .node-body {
+            background-color:#fad7a0;
+            border-radius:0px 0px 10px 10px;
+            padding:10px;
+            border:1px solid black;
+        }
+
     </style>
 
     <div class="container full-screen">
-        <svg class="full-screen" id="main-view">
+        <svg class="full-screen" id="main-view-container">
         </svg>
 
         <div id="line_attrs"></div>
     </div>
 
     <script>
-    let nodes = NODES;
-    let links = LINKS;
-    let simulation;
-    let svg = d3.select("svg");
-    let linkElements = svg.append("g").selectAll(".link");
-    let nodeElements = svg.append("g").selectAll('foreignObject');
-    let isDirected = IS_DIRECTED; // default, backend can tell us later
+        // Top-level, single declaration
+        let nodes = NODES.slice(); // clone to allow mutation
+        let links = LINKS.slice();
+        let simulation;
+        let svg = d3.select("#main-view-container");
+        let container = svg.append("g");
+        container.attr("transform", "translate(0.0, 0.0) scale(1.0)")
+        let linkElements = container.append("g").selectAll(".link");
+        
+        let nodeElements = container.append("g").selectAll("foreignObject");
+        let isDirected = IS_DIRECTED;
+        let initialSelection = SELECTED_ID;
 
-    function nodeToHTML(node){
-        let html = `<div style='padding:10px; border:1px solid black;text-align:center;background-color:orange; border-radius:10px 10px 0px 0px;'>${node.id}</div>`;
-        let attrHTML = Object.keys(node)
-            .filter(k => k !== "id")
-            .map(k => `<p style='white-space:nowrap'>${k}: ${node[k]}</p>`).join("<br/>");
-        html += `<div style='background-color:#fad7a0; border-radius:0px 0px 10px 10px; padding:10px; border:1px solid black;'>${attrHTML}</div>`;
-        return html;
-    }
+        // Arrowhead marker
+        svg.append("defs").append("marker")
+            .attr("id", "arrowhead")
+            .attr("viewBox", "0 -5 10 10") // marker coordinate system
+            .attr("refX", 15) // position of arrow tip relative to end of line
+            .attr("refY", 0)
+            .attr("markerWidth", 6)
+            .attr("markerHeight", 6)
+            .attr("orient", "auto")
+            .append("path")
+            .attr("d", "M0,-5L10,0L0,5") // triangle
+            .attr("fill", "black");
 
-    function updateGraph() {
-        // NODES
-        nodeElements = nodeElements.data(nodes, d => d.id);
-        nodeElements.exit().remove();
+        const mainZoom = d3.zoom()
+            .scaleExtent([0.1, 5])
+            .on("zoom", (event) => {
+                container.attr("transform", event.transform);
 
-        // Enter + merge for foreignObject
-        let foEnter = nodeElements.enter()
-            .append('foreignObject')
-            .attr("width", 1)
-            .attr("height", 1)
-            .call(d3.drag().on("start", dragstarted).on("drag", dragged).on("end", dragended));
+                const ev = new CustomEvent("mainViewZoomed", {
+                    detail: { mainG: container.node(), transform: event.transform, mainSvg: svg.node() }
+                });
+                document.dispatchEvent(ev);
+            });
 
-        foEnter.append("xhtml:div")
-            .attr("style", "width:fit-content;")
-            .attr("nodeId", d => d.id)
-            .html(nodeToHTML);
+        svg.call(mainZoom);
 
-        // Measure sizes on the divs
-        foEnter.select("div").each(d => {
-            const div = document.querySelector(`div[nodeId='${d.id}']`);
-            d.width = div.offsetWidth;
-            d.height = div.offsetHeight;
-
-            // initial position for simulation
-            d.x = Math.random() * 500 + 50;
-            d.y = Math.random() * 500 + 50;
+        svg.on("click", () => {
+            fetch(`/deselect/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .finally(() => {document.dispatchEvent(new CustomEvent("nodeSelectionChanged"))})
         });
 
-        // Merge the <foreignObject> selection
-        nodeElements = foEnter.merge(nodeElements);
-
-        // Update sizes on <foreignObject>
-        nodeElements.attr("width", d => d.width)
-                    .attr("height", d => d.height);
-
-        // LINKS
-        linkElements = linkElements.data(links, d => d.source.id + "-" + d.target.id);
-        linkElements.exit().remove();
-        linkElements = linkElements.enter()
-            .append("path")
-            .attr("stroke", "black")
-            .attr("stroke-width", "3px")
-            .attr("fill", "none")
-            .on("click", (event, d) => line_clicked(event, d))
-            .merge(linkElements);
-
-        // Start/restart simulation
-        if (!simulation) {
-            simulation = d3.forceSimulation(nodes)
-                .force("link", d3.forceLink().id(d => d.id).links(links).strength(0.02))
-                .force("charge", d3.forceManyBody().strength(-250))
-                .force("collide", d3.forceCollide().radius(d => Math.max(d.width, d.height) / 2).iterations(10))
-                .on("tick", ticked);
+        function nodeToHTML(node){
+            let html = `<div class='node-head'>${node.id}</div>`;
+            let attrHTML = Object.keys(node.attributes)
+                .filter(k => k !== "id")
+                .map(k => `<p style='white-space:nowrap'>${k}: ${node.attributes[k]}</p>`).join("<br/>");
+            html += `<div class='node-body'>${attrHTML}</div>`;
+            return html;
         }
-        simulation.nodes(nodes);
-        simulation.force("link").links(links);
-        simulation.alpha(1).restart();
-    }
 
-    function addNode(node) {
-        if (!nodes.find(n => n.id === node.id)) {
-            nodes.push(node);
+        function updateGraph() {
+            // LINKS
+            linkElements = linkElements.data(links, d => d.source.id + "-" + d.target.id);
+            linkElements.exit().remove();
+            linkElements = linkElements.enter()
+                .append("path")
+                .attr("stroke", "black")
+                .attr("stroke-width", "3px")
+                .attr("fill", "none")
+                .attr("marker-end", isDirected ? "url(#arrowhead)" : null) // <-- add this
+                .on("click", (event, d) => line_clicked(event, d))
+                .merge(linkElements)
+                .attr("marker-end", isDirected ? "url(#arrowhead)" : null); // <-- also update existing ones
+
+            // NODES
+            nodeElements = nodeElements.data(nodes, d => d.id);
+            nodeElements.exit().remove();
+            let foEnter = nodeElements.enter()
+                .append("foreignObject")
+                .attr("width", 1)
+                .attr("height", 1)
+                .call(d3.drag()
+                    .on("start", dragstarted)
+                    .on("drag", dragged)
+                    .on("end", dragended)
+                )
+                .on("click", (event, d) => {
+                    fetch(`/select/${encodeURIComponent(d.id)}/`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        }
+                    })
+                    .finally(() => {document.dispatchEvent(new CustomEvent("nodeSelectionChanged"))})
+                    event.stopPropagation();
+                });
+
+            foEnter.append("xhtml:div")
+                .attr("style", "width:fit-content;")
+                .attr("nodeId", d => d.id)
+                .html(nodeToHTML);
+
+            // Measure new nodes
+            foEnter.select("div").each(function(d){
+                const div = this;
+                d.width = div.offsetWidth;
+                d.height = div.offsetHeight;
+                if (d.x === undefined) d.x = Math.random() * 500 + 50;
+                if (d.y === undefined) d.y = Math.random() * 500 + 50;
+            });
+
+            nodeElements = foEnter.merge(nodeElements);
+            nodeElements.attr("width", d => d.width)
+                        .attr("height", d => d.height);
+
+            // Refresh HTML of all node divs (important for updates)
+            nodeElements.select("div")
+                .html(d => nodeToHTML(d));
+                    
+            // Simulation
+            if (!simulation) {
+                simulation = d3.forceSimulation(nodes)
+                    .force("link", d3.forceLink().id(d => d.id).links(links).strength(0.02))
+                    .force("charge", d3.forceManyBody().strength(-1500))
+                    .force("collide", d3.forceCollide().radius(d => Math.max(d.width, d.height)/2).iterations(10))
+                    .on("tick", ticked);
+            } else {
+                simulation.nodes(nodes);
+                simulation.force("link").links(links);
+                simulation.alpha(1).restart();
+            }
+        }
+
+        function revisualize(newNodes, newLinks) {
+            // === 1. Reconcile nodes ===
+            const newNodeIds = newNodes.map(n => n.attributes.id);
+
+            // Remove nodes no longer present
+            nodes = nodes.filter(n => newNodeIds.includes(n.id));
+
+            // Add or update nodes
+            newNodes.forEach(n => {
+                let existing = nodes.find(x => x.id === n.attributes.id);
+                if (existing) {
+                    console.log(existing)
+                    console.log(n)
+                    // Update attributes without overwriting x/y
+                    existing.attributes = {}
+                    Object.keys(n.attributes).forEach(k => { existing.attributes[k] = n.attributes[k]; console.log(k) });
+                } else {
+                    // New node: assign random x/y
+                    let node = {
+                        id: n.attributes?.id ?? n.id,
+                        attributes: { ...n.attributes },   // <-- ensure it's always an object
+                        x: n.x ?? (Math.random() * 500 + 50),
+                        y: n.y ?? (Math.random() * 500 + 50)
+                    };
+                    nodes.push(node);
+                }
+            });
+
+            // === 2. Reconcile links ===
+            links = []; // clear links
+            newLinks.forEach(l => {
+                let sourceNode = nodes.find(n => n.id === (l.source.id || l.source));
+                let targetNode = nodes.find(n => n.id === (l.target.id || l.target));
+                if (sourceNode && targetNode) {
+                    links.push({ source: sourceNode, target: targetNode, attrs: l.attrs || {} });
+                }
+            });
+
+            // === 3. Update graph DOM ===
+            updateGraph();
+
+            // === 4. Measure node widths/heights from actual DOM ===
+            nodeElements.select("div").each(function(d) {
+                d.width = this.offsetWidth;
+                d.height = this.offsetHeight;
+            });
+            nodeElements.attr("width", d => d.width)
+                        .attr("height", d => d.height);
+
+            // === 5. Restart simulation smoothly ===
+            if (simulation) {
+                simulation.nodes(nodes);
+                simulation.force("link").links(links);
+                simulation.alpha(1).restart();
+            } else {
+                simulation = d3.forceSimulation(nodes)
+                    .force("link", d3.forceLink().id(d => d.id).links(links).strength(0.02))
+                    .force("charge", d3.forceManyBody().strength(-1500))
+                    .force("collide", d3.forceCollide().radius(d => Math.max(d.width, d.height)/2).iterations(10))
+                    .on("tick", ticked);
+            }
+        }
+
+        function hasReverseLink(link) {
+            return links.some(l => l.source.id === link.target.id && l.target.id === link.source.id);
+        }
+
+        function addNode(node) {
+            console.log("Adding node")
+            if (!nodes.find(n => n.id === node.id)) {
+                nodes.push(node);
+                updateGraph();
+            }
+        }
+
+        function removeNode(id) {
+            nodes = nodes.filter(n => n.id !== id);
+            links = links.filter(l => l.source.id !== id && l.target.id !== id);
             updateGraph();
         }
-    }
 
-    function removeNode(id) {
-        nodes = nodes.filter(n => n.id !== id);
-        links = links.filter(l => l.source.id !== id && l.target.id !== id);
-        updateGraph();
-    }
+        function addLink(sourceId, targetId, attrs) {
+            let s = nodes.find(n => n.id === sourceId);
+            let t = nodes.find(n => n.id === targetId);
+            if (s && t && !links.find(l => l.source.id === sourceId && l.target.id === targetId)) {
+                links.push({source: s, target: t, attrs: attrs || {}});
+                updateGraph();
+            }
+        }
 
-    function addLink(sourceId, targetId, attrs) {
-        let s = nodes.find(n => n.id === sourceId);
-        let t = nodes.find(n => n.id === targetId);
-        if (s && t && !links.find(l => l.source.id === sourceId && l.target.id === targetId)) {
-            links.push({source: s, target: t, attrs: attrs || {}});
+        function removeLink(sourceId, targetId) {
+            links = links.filter(l => !(l.source.id === sourceId && l.target.id === targetId));
             updateGraph();
         }
-    }
 
-    function removeLink(sourceId, targetId) {
-        links = links.filter(l => !(l.source.id === sourceId && l.target.id === targetId));
-        updateGraph();
-    }
-
-    function ticked() {
-        linkElements.attr("d", d => `M${d.source.x + d.source.width/2},${d.source.y + d.source.height/2} L${d.target.x + d.target.width/2},${d.target.y + d.target.height/2}`);
-        nodeElements.attr("x", d => d.x).attr("y", d => d.y);
-    }
-
-    function dragstarted(event) {
-        if (!event.active) simulation.alphaTarget(0.3).restart();
-        event.subject.fx = event.subject.x;
-        event.subject.fy = event.subject.y;
-    }
-    function dragged(event) {
-        event.subject.fx = event.x;
-        event.subject.fy = event.y;
-    }
-    function dragended(event) {
-        if (!event.active) simulation.alphaTarget(0);
-        event.subject.fx = null;
-        event.subject.fy = null;
-    }
-    function line_clicked(event, l) {
-        let d = document.getElementById("line_attrs");
-        d.innerHTML = "";
-        d.style.visibility = "visible";
-        for (let key in l.attrs) {
-            d.innerHTML += `<p>${key}: ${l.attrs[key]}</p>`;
+        function endpointOnNodePerimeter(source, target) {
+            const dx = target.x - source.x;
+            const dy = target.y - source.y;
+            const angle = Math.atan2(dy, dx);
+            return {
+                x: target.x + target.width/2  - Math.cos(angle) * (target.width/2),
+                y: target.y + target.height/2 - Math.sin(angle) * (target.height/2)
+            };
         }
-    }
 
-    //WebSocket listener for backend updates
-    let socket = new WebSocket("ws://localhost:8765");
-    socket.onmessage = (event) => {
-        let msg = JSON.parse(event.data);
-        if (msg.action === "addNode") addNode(msg.node);
-        if (msg.action === "removeNode") removeNode(msg.id);
-        if (msg.action === "addLink") addLink(msg.source, msg.target, msg.attrs);
-        if (msg.action === "removeLink") removeLink(msg.source, msg.target);
-        if (msg.action === "setDirected") isDirected = msg.value;
-    };
+        function ticked() {
+            linkElements.attr("d", d => {
+                const isReverse = links.some(l =>
+                    l.source.id === d.target.id && l.target.id === d.source.id
+                );
 
-    updateGraph();
+                // Compute adjusted end point
+                const end = endpointOnNodePerimeter(d.source, d.target);
+                const start = {
+                    x: d.source.x + d.source.width/2,
+                    y: d.source.y + d.source.height/2
+                };
+
+                if (isReverse && d.source.id > d.target.id && isDirected) {
+                    const dx = end.x - start.x;
+                    const dy = end.y - start.y;
+                    const dr = Math.sqrt(dx*dx + dy*dy) * 1.5;
+                    return `M${start.x},${start.y} A${dr},${dr} 0 0,1 ${end.x},${end.y}`;
+                } else {
+                    return `M${start.x},${start.y} L${end.x},${end.y}`;
+                }
+            });
+
+            nodeElements.attr("x", d => d.x).attr("y", d => d.y);
+        }
+
+        // Drag helpers
+        function dragstarted(event) { if (!event.active) simulation.alphaTarget(0.3).restart(); event.subject.fx = event.subject.x; event.subject.fy = event.subject.y; }
+        function dragged(event) { event.subject.fx = event.x; event.subject.fy = event.y; }
+        function dragended(event) { if (!event.active) simulation.alphaTarget(0); event.subject.fx = null; event.subject.fy = null; }
+
+        function line_clicked(event, l) {
+            let d = document.getElementById("line_attrs");
+            d.innerHTML = "";
+            d.style.visibility = "visible";
+            for (let key in l.attrs) d.innerHTML += `<p>${key}: ${l.attrs[key]}</p>`;
+        }
+
+        function deselectNodes(){
+            d3.selectAll("foreignObject > div").classed("node-selected", false);
+        }
+
+        function selectNode(node_id){
+            deselectNodes();
+            d3.selectAll(`foreignObject > div[nodeId='${node_id}']`)
+                .classed("node-selected", true);
+        }
+
+        // WebSocket updates
+        let socket = new WebSocket("ws://localhost:8765");
+        socket.onopen = () => console.log("Websocket connected")
+        socket.onerror = () => console.log("Error connecting websocket")
+        socket.onmessage = (event) => {
+            let msg = JSON.parse(event.data);
+            if (msg.action === "setDirected") isDirected = msg.value;
+            if (msg.action === "selectNode") selectNode(msg.node_id);
+            if (msg.action === "deselectNode") deselectNodes();
+            if (msg.action === "revisualize") revisualize(msg.nodes, msg.links);
+        };
+
+        revisualize(nodes, links);
+        if(initialSelection)
+            selectNode(initialSelection)
+
+        document.addEventListener("birdViewClick", (e) => {
+            const { newX, newY } = e.detail;
+            const t = d3.zoomTransform(svg.node());
+
+            svg.transition()
+            .duration(300)
+            .call(mainZoom.transform, d3.zoomIdentity.translate(newX, newY).scale(t.k));
+        });
     </script>
 </div>

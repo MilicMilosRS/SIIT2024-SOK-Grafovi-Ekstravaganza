@@ -18,6 +18,12 @@
                 display: flex;
             }
 
+            .container {
+                display: flex;
+                flex-direction: column;
+                flex-grow: 1;
+            }
+
             .side-panel{
                 display: flex;
                 flex-direction: column;
@@ -59,6 +65,9 @@
             .tree-view{
                 border-bottom: 3px solid orange;
                 flex-grow: 1;
+                display: flex;
+                flex-direction: column;
+                overflow: hidden;
             }
 
             .bird-view{
@@ -70,6 +79,12 @@
                 flex-grow: 1;
             }
 
+            .big-screen{
+                background-color: #fad7a0;
+                flex-grow: 1;
+                display: flex;
+                flex-direction: column;
+            }
         </style>
         <script src="https://d3js.org/d3.v7.min.js"></script>
     </head>
@@ -87,29 +102,24 @@
                 <div class="view-thing" onclick="window.location.href='?style=block'">
                     Block
                 </div>
-                <div class="view-thing">
-                    View style 3
-                </div>
-                <div class="view-thing">
-                    View style 1
-                </div>
-                <div class="view-thing">
-                    View style 2
-                </div>
-                <div class="view-thing">
-                    View style 3
-                </div>
             </div>
             <div class="tree-view">
-                tree view goes here
+                {% include "treeview.html" %}
             </div>
             <div class="bird-view">
-                bird view goes here
+                {% include "birdview.html" %}
             </div>
         </div>
     
-        <div id="main-view">
-            {{ main_view|safe }}
+            
+        <div class="big-screen">
+            {% include "toolbar.html" %}
+            <div id="tag-input-wrapper" style="display: flex; flex-wrap: wrap; gap: 5px; padding: 10px; border: 1px solid #ccc; margin-top: 10px;">
+                <input type="text" id="container-input" placeholder="Search by typing an attribute name or value, or filter by typing <attribute> <operand> <value>" style="width: 100%; padding: 10px 10px 10px 0px; font-size: 16px; border: 1px solid #ccc; margin-top: 10px;">
+            </div>
+            <div id="main-view">
+                {{ main_view|safe }}
+            </div>
         </div>
 
         <button onclick="toggleCLI()" style="position: fixed; bottom: 40px; left: 20px; z-index: 9999;">
@@ -122,6 +132,7 @@
         </div>
 
         <script>
+            var actualFilters;
             function toggleCLI() {
                 const cli = document.getElementById('cli-container');
                 cli.style.display = (cli.style.display === 'none') ? 'block' : 'none';
@@ -149,24 +160,6 @@
                         outputDiv.innerHTML += `<div>> ${command}</div>`;
                         outputDiv.innerHTML += `<div>${data.output}</div>`;
                         outputDiv.scrollTop = outputDiv.scrollHeight;
-
-                        return fetch("/partial-graph")
-                    })
-                    .then(res => res.text())
-                    .then(html => {
-                        const container = document.getElementById('main-view');
-                        container.innerHTML = html;
-
-                        container.querySelectorAll("script").forEach(script => {
-                            const newScript = document.createElement("script");
-                            if (script.src) {
-                                newScript.src = script.src;
-                            } else {
-                                newScript.textContent = script.textContent;
-                            }
-                            document.body.appendChild(newScript);
-                            document.body.removeChild(newScript);
-                        });
                     })
                     .catch(() => {
                         const outputDiv = document.getElementById('cli-output');
@@ -176,6 +169,143 @@
                     this.value = '';
                 }
             });
+
+        const input = document.getElementById('container-input');
+        const wrapper = document.getElementById('tag-input-wrapper');
+
+        input.addEventListener('keydown', function(event) {
+            if (event.key === 'Enter') {
+                let callback;
+                event.preventDefault();
+                let value = this.value.trim();
+                if (value === '') return;
+
+                let splitValue = value.split(" ");
+                let valid = true;
+                
+                if (splitValue.length === 1) {
+                    value = "search " + splitValue[0]
+                    callback = fetch('/search/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': '{{ csrf_token }}'
+                        },
+                        body: JSON.stringify({ value: value })
+                    })
+                } else if (splitValue.length === 3) {
+                    value = "filter " + splitValue[0] + " " + splitValue[1] + " " + splitValue[2]
+                    let allowedOperands = [">=", "<=", "==", "!=", ">", "<"]
+                    if (allowedOperands.includes(splitValue[1])) {
+                        callback = fetch('/filter/', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRFToken': '{{ csrf_token }}'
+                            },
+                            body: JSON.stringify({ value: value })
+                        })
+                    }
+                } else {
+                    alert('Invalid search or filtering attempt!')
+                    valid = false;
+                }
+
+                if (valid) {
+                    const tag = document.createElement('div');
+                    tag.textContent = value;
+                    tag.style.padding = '5px 10px';
+                    tag.style.background = 'lightgray';
+                    tag.style.borderRadius = '20px';
+                    tag.style.display = 'inline-flex';
+                    tag.style.alignItems = 'center';
+                    tag.style.gap = '5px';
+
+                    let currentTagCount = wrapper.querySelectorAll('div').length;
+
+                    const closeButton = document.createElement('span');
+                        closeButton.textContent = 'X';
+                        closeButton.style.cursor = 'pointer';
+                        closeButton.style.padding = '0 5px';
+                        closeButton.style.background = 'red';
+                        closeButton.style.color = 'white';
+                        closeButton.style.borderRadius = '50%';
+                        closeButton.style.fontWeight = 'bold';
+
+                        tag.appendChild(closeButton);
+
+                        closeButton.addEventListener('click', function() {
+                            fetch('remove-filter', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'X-CSRFToken': '{{ csrf_token }}' },
+                                    body: JSON.stringify({index: currentTagCount})
+                            }).then(tag.remove())
+                        });
+
+                    wrapper.insertBefore(tag, input);
+                    this.value = '';
+                }
+                
+            }
+        });
+        
+            function getFilters() {
+                fetch('get-filters', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': '{{ csrf_token }}' }
+                }).then(res => res.json())
+                .then(filters => {
+                    actualFilters = filters.filters
+                    for (let index = 0; index < actualFilters.length; index++) {
+                        let filter = actualFilters[index];
+                        actualFilters[index].index = index;
+                        let value = ""
+                        if (filter.type === "search") {
+                            value = "search " + filter.attribute
+                        } else {
+                            value = "filter " + filter.attribute + " " + filter.type + " " + filter.value
+                        }
+                        const tag = document.createElement('div');
+                        tag.textContent = value;
+                        tag.style.padding = '5px 10px';
+                        tag.style.background = 'lightgray';
+                        tag.style.borderRadius = '20px';
+                        tag.style.display = 'inline-flex';
+                        tag.style.alignItems = 'center';
+                        tag.style.gap = '5px';
+
+                        const closeButton = document.createElement('span');
+                        closeButton.textContent = 'X';
+                        closeButton.style.cursor = 'pointer';
+                        closeButton.style.padding = '0 5px';
+                        closeButton.style.background = 'red';
+                        closeButton.style.color = 'white';
+                        closeButton.style.borderRadius = '50%';
+                        closeButton.style.fontWeight = 'bold';
+
+                        tag.appendChild(closeButton);
+
+                        closeButton.addEventListener('click', function() {
+                            fetch('remove-filter', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'X-CSRFToken': '{{ csrf_token }}' },
+                                    body: JSON.stringify({index: actualFilters[index].index})
+                            }).then(tag.remove())
+                        });
+
+                        wrapper.insertBefore(tag, input);
+                        this.value = '';
+                    }
+                })
+            }
+            getFilters();
+        
         </script>
     </body>
 </html>

@@ -33,21 +33,29 @@ class Node(object):
 class Graph(object):
     def __init__(self, directed: bool) -> None:
         self._vertices = {}
+        #Dict of dicts
+        #Example: node1_id: {node2_id: {EDGE ATTRIBUTES}, node3_id: {EDGE ATTRIBUTES}}
         self._edges = {}
         self._is_directed = directed
+        self._filters = []
+        self._filtered_vertices = {}
+        self._filtered_edges = {}
 
     def add_vertex(self, vertex: Node) -> bool:
         if vertex.get_id() in self._vertices:
             return False
         
         self._vertices[vertex.get_id()] = vertex
+        return True
 
     def edit_vertex(self, vertex: Node) -> bool:
         vid = vertex.get_id()
         if vid not in self._vertices:
-            return ("ERROR: That node/edge doesn't exist in the graph.")
+            return False
     
         existing_node = self._vertices[vid]
+        existing_node._attributes.clear()
+        existing_node._attributes["id"] = vid
         for key,value in vertex.get_attributes().items():
             if key != 'id':
                 existing_node.set_attribute(key, value)
@@ -128,12 +136,46 @@ class Graph(object):
                     friends.append({k: v for k, v in friend_attrs.items() if k != "id"})
                 member_dict["friends"] = friends
                 data["community"]["members"].append(member_dict)
-        
         return data
+    
+    #Returns a tuple.
+    #First element is outgoing connections.
+    #Second element is incoming connections.
+    def get_connected_nodes(self, node_id: str):
+        outgoing = []
+        incoming = []
+
+        #Loop through outgoing connections and take the nodes
+        if node_id in self._edges:
+            for outgoing_node_id in self._edges[node_id].keys():
+                outgoing.append(self._vertices[outgoing_node_id])
+
+        #Loop through all connections and take the incoming nodes
+        for src_id in self._edges.keys():
+            for trgt_id in self._edges[src_id].keys():
+                if trgt_id == node_id:
+                    incoming.append(self._vertices[src_id])
+        
+        return (outgoing, incoming)
+    
+    def add_filter(self, filter):
+        self._filters.append(filter)
+
+    def remove_filter(self, index: int):
+        index = int(index)
+        if (index < 0 or index >= len(self._filters)):
+            return False
+        self._filters.pop(index)
+        return True
+
+    def get_filters(self):
+        return self._filters
+        
+
 class GraphVisualizer(ABC):
     #Returns a string representing an HTML DOM visualization of the provided graph
     @abstractmethod
-    def visualize_graph(self, g: Graph)->str:
+    def visualize_graph(self, g: Graph, selected_node: Node)->str:
         pass
 
     @abstractmethod
@@ -163,4 +205,16 @@ class GraphVisualizer(ABC):
     #When the visualizer being used is switched from this to something else
     @abstractmethod
     def on_switched_from(self):
+        pass
+
+    @abstractmethod
+    def on_switched_to(self):
+        pass
+
+    @abstractmethod
+    def on_selection_changed(self, node: Node):
+        pass
+
+    @abstractmethod
+    def revisualize_graph(self, graph: Graph):
         pass

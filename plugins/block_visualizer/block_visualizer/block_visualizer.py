@@ -10,6 +10,8 @@ class BlockVisualizer(GraphVisualizer):
         self.clients = set()
         self.loop = None
         self.server = None
+
+    def on_switched_to(self):
         self.thread = threading.Thread(target=self._start_background_server, daemon=True)
         self.thread.start()
 
@@ -23,10 +25,12 @@ class BlockVisualizer(GraphVisualizer):
 
         loop.run_until_complete(start())  # start the server
         loop.run_forever()  
+        print("Server running")
 
     def on_switched_from(self):
+        print("Switched from")
         if self.loop and self.server:
-            asyncio.run_coroutine_threadsafe(self._shutdown_server(), self.loop)
+            asyncio.run_coroutine_threadsafe(self._shutdown_server(), self.loop).result()
 
     async def _shutdown_server(self):
         print("Shutting down server...")
@@ -50,12 +54,12 @@ class BlockVisualizer(GraphVisualizer):
     async def _send_update_async(self, update: dict):
         if self.clients:
             msg = json.dumps(update)
-            await asyncio.wait([client.send(msg) for client in self.clients])
+            await asyncio.gather(*(client.send(msg) for client in self.clients))
 
-    def visualize_graph(self, g: Graph) -> str:
+    def visualize_graph(self, g: Graph, selected_node: Node) -> str:
         parsedNodes = []
         for node in g._vertices.values():
-            parsedNodes.append(node._attributes)
+            parsedNodes.append({"attributes": node._attributes})
 
         parsedLinks = []
         for source, targets in g._edges.items():
@@ -66,24 +70,30 @@ class BlockVisualizer(GraphVisualizer):
         with open(template_path + "/templates/layout.html") as file:
             html = file.read()
 
-        return html.replace("NODES", json.dumps(parsedNodes)).replace("LINKS", json.dumps(parsedLinks)).replace("IS_DIRECTED", "true" if g._is_directed else "false")
+        html = html.replace("NODES", json.dumps(parsedNodes))
+        html = html.replace("LINKS", json.dumps(parsedLinks))
+        html = html.replace("IS_DIRECTED", "true" if g._is_directed else "false")
+        html = html.replace("SELECTED_ID", '"' + str(selected_node.get_id()) + '"' if selected_node is not None else "null")
+
+        return html
 
     def add_node(self, node: Node):
+        print("adding node")
         self._send_update({
             "action": "addNode",
-            "node": {"id": node.id, **node._attributes}
+            "node": {"id": node.get_id(), **node._attributes}
         })
 
     def edit_node(self, node: Node):
         self._send_update({
             "action": "editNode",
-            "node": {"id": node.id, **node._attributes}
+            "node": {"id": node.get_id(), **node._attributes}
         })
 
     def remove_node(self, node: Node):
         self._send_update({
             "action": "removeNode",
-            "id": node.id
+            "id": node.get_id()
         })
 
     def add_link(self, id_source: str, id_target: str, **attrs):
@@ -107,4 +117,36 @@ class BlockVisualizer(GraphVisualizer):
             "action": "removeLink",
             "source": id_source,
             "target": id_target
+        })
+
+    def on_selection_changed(self, node):
+        if node is not None:
+            self._send_update({
+                "action": "selectNode",
+                "node_id": node.get_id()
+            })
+        else:
+            self._send_update({
+                "action": "deselectNode"
+            })
+
+    #Visualize the graph dynamically, without returning a whole new html page
+    def revisualize_graph(self, graph: Graph):
+        parsedNodes = []
+        for node in graph._vertices.values():
+            parsedNodes.append({"attributes": node._attributes})
+
+        parsedLinks = []
+        for source, targets in graph._edges.items():
+            for target in targets:
+                parsedLinks.append({"source": source, "target": target, "attrs": graph._edges[source][target]})
+
+        self._send_update({
+            "action": "setDirected",
+            "value": graph._is_directed
+        })
+        self._send_update({
+            "action": "revisualize",
+            "nodes": parsedNodes,
+            "links": parsedLinks
         })
