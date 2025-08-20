@@ -34,7 +34,7 @@ class Platform():
         self.forestView.graph_updated()
         for func in self.graph_update_listeners:
             func()
-        self.visualizer.revisualize_graph(self.graph)
+        self.visualizer.revisualize_graph(self._filtered_graph)
 
     #Graph stuff
     def add_vertex(self, vertex: Node) -> bool:
@@ -171,7 +171,8 @@ class Platform():
                     # print(attr in node._attributes)
                 self._filtered_graph._vertices = {
                     key: node for key, node in self._filtered_graph._vertices.items()
-                    if attr in node._attributes and operand(node[attr], value)
+                    # if attr in node._attributes and operand(node[attr], value)
+                    if attr in node._attributes and operand(node._attributes[attr], value)
                 }
                 
             
