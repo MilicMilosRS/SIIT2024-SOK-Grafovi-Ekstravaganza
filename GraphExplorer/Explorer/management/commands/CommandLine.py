@@ -12,6 +12,7 @@ class CommandLine:
             "delete": DeleteCommand.DeleteCommand,
             "save-graph": SaveGraphCommand.SaveGraphCommand,
             "filter": FilterCommand.FilterCommand,
+            "search": FilterCommand.FilterCommand
             # search
         }
 

@@ -34,7 +34,6 @@ class Platform():
         self.forestView.graph_updated()
         for func in self.graph_update_listeners:
             func()
-        self.visualizer.revisualize_graph(self._filtered_graph)
 
     #Graph stuff
     def add_vertex(self, vertex: Node) -> bool:
@@ -125,9 +124,9 @@ class Platform():
     #Filter stuff
 
     def update_graph_view(self):
-        self._graph_updated()
         self._create_filtered_graph()
         self.forestView = ForestView(self._filtered_graph)
+        self._graph_updated()
         self.visualizer.revisualize_graph(self._filtered_graph)
 
     def get_filters(self):
