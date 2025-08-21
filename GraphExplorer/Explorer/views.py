@@ -19,7 +19,7 @@ js = JSONDataSource(filepath)
 js.parse_json()
 graph_instance = js.convert_to_api_graph()
 
-platform = Platform(graph_instance, SimpleVisualizer())
+platform = Platform(graph_instance, SimpleVisualizer(), filepath)
 
 cli_instance = CommandLine(platform, filepath)
 # cli_instance.register_command("create", CreateCommand(platform))

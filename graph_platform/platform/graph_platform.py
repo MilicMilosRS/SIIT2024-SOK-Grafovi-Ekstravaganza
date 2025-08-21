@@ -5,7 +5,8 @@ from TreeVIew.tree_view import TreeNode, ForestView
 from operator import eq, ne, gt, lt, ge, le
 
 class Platform():
-    def __init__(self, graph: Graph = Graph(False), visualizer: GraphVisualizer = None):
+    def __init__(self, graph: Graph = Graph(False), visualizer: GraphVisualizer = None,file_path = None):
+        self.file_path = file_path
         self.graph_update_listeners = []
         self.graph = graph
         self._filtered_graph = graph

@@ -7,9 +7,9 @@ from . import CommandLine as CLI
 class SaveGraphCommand(Command.Command):
     def execute(self):
         try:
-            with open(self.file_path, "w") as f:
+            with open(self.platform.file_path, "w") as f:
                 json.dump(self.platform.graph.to_json_dict_hierarchy(), f, indent=2)
-            return f"Graph saved successfully to {self.file_path}."
+            return f"Graph saved successfully to {self.platform.file_path}."
         except Exception as e:
                 return f"ERROR: Failed to save graph. {str(e)}"
 

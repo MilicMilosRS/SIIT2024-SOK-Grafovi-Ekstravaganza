@@ -16,7 +16,6 @@ class JSONDataSource:
         self.build_graph(data)
         return self.graph
 
-
     def build_graph(self, data, parent=None):
         if isinstance(data, dict):
             for key, value in data.items():
