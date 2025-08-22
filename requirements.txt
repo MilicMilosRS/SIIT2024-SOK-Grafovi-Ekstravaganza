@@ -1,2 +1,5 @@
-api
-platform
+-e ./api
+-e ./graph_platform
+-e ./plugins/block_visualizer
+-e ./plugins/simple_visualizer
+-e ./plugins/data_source_json
