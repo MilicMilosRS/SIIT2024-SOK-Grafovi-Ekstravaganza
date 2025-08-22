@@ -19,7 +19,6 @@ class JSONDataSource:
         if isinstance(data, dict):
             for key, value in data.items():
                 if isinstance(value, dict) or isinstance(value, list):
-                    # Create a node for this key
                     node = Node(id=str(key) + "_" + str(id(value)))
                     node.set_attribute("name", key)
                     self.graph.add_vertex(node)
@@ -27,10 +26,8 @@ class JSONDataSource:
                     if parent_node:
                         self.graph.create_edge(parent_node.get_id(), node.get_id())
 
-                    # Recursively build child nodes
                     self.build_graph(value, node)
                 else:
-                    # Leaf node: store just the value
                     node = Node(id=str(key) + "_" + str(id(value)))
                     node.set_attribute("name", value)
                     self.graph.add_vertex(node)
