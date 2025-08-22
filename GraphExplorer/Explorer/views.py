@@ -16,8 +16,7 @@ from .management.commands import CreateCommand, EditCommand, DeleteCommand, Save
 
 filepath = "../large_graph.json"
 js = JSONDataSource(filepath)
-js.parse_json()
-graph_instance = js.convert_to_api_graph()
+graph_instance=js.parse_json()
 
 platform = Platform(graph_instance, SimpleVisualizer(), filepath)
 
