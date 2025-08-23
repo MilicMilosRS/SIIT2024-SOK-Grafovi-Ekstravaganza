@@ -14,7 +14,15 @@ const viewportRect = birdView.querySelector("#viewportRect");
 let mainSvg;
 let mainG;
 
-function updateBirdView(transform) {
+function updateViewbox(transform) {
+    // viewport pravougaonik
+    viewportRect.setAttribute("x", -transform.x / transform.k);
+    viewportRect.setAttribute("y", -transform.y / transform.k);
+    viewportRect.setAttribute("width", mainSvg.clientWidth / transform.k);
+    viewportRect.setAttribute("height", mainSvg.clientHeight / transform.k);
+}
+
+function updateBirdView() {
     if(!mainG) return;
 
     const bbox = mainG.getBBox();
@@ -25,23 +33,19 @@ function updateBirdView(transform) {
     const scaleX = birdView.clientWidth / bbox.width;
     const scaleY = birdView.clientHeight / bbox.height;
 
-    // viewport pravougaonik
-    viewportRect.setAttribute("x", -transform.x / transform.k);
-    viewportRect.setAttribute("y", -transform.y / transform.k);
-    viewportRect.setAttribute("width", mainSvg.clientWidth / transform.k);
-    viewportRect.setAttribute("height", mainSvg.clientHeight / transform.k);
-
     // **kopiranje sadržaja MainView u BirdView**
     // za performanse možeš napraviti "mini verziju" grafike, npr samo <path> za linkove i male krugove za čvorove
     birdContent.innerHTML = mainG.innerHTML;
 };
+
+setInterval(updateBirdView, 1000);
 
 // Sluša custom event iz MainView
 document.addEventListener("mainViewZoomed", (e) => {
     mainG = e.detail.mainG;
     transform = e.detail.transform;
     mainSvg = e.detail.mainSvg;
-    updateBirdView(transform);
+    updateViewbox(transform);
 });
 
 birdView.addEventListener("click", (event) => {

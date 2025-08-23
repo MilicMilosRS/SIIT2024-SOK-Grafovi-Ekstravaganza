@@ -177,8 +177,8 @@
             // Simulation
             if (!simulation) {
                 simulation = d3.forceSimulation(nodes)
-                    .force("link", d3.forceLink().id(d => d.id).links(links).strength(0.02))
-                    .force("charge", d3.forceManyBody().strength(-1500))
+                    .force("link", d3.forceLink().id(d => d.id).links(links).strength(0.03))
+                    .force("charge", d3.forceManyBody().strength(-500))
                     .force("collide", d3.forceCollide().radius(d => Math.max(d.width, d.height)/2).iterations(10))
                     .on("tick", ticked);
             } else {
@@ -241,11 +241,11 @@
             if (simulation) {
                 simulation.nodes(nodes);
                 simulation.force("link").links(links);
-                simulation.alpha(1).restart();
+                simulation.alpha(3).restart();
             } else {
                 simulation = d3.forceSimulation(nodes)
-                    .force("link", d3.forceLink().id(d => d.id).links(links).strength(0.02))
-                    .force("charge", d3.forceManyBody().strength(-1500))
+                    .force("link", d3.forceLink().id(d => d.id).links(links).strength(0.03))
+                    .force("charge", d3.forceManyBody().strength(-500))
                     .force("collide", d3.forceCollide().radius(d => Math.max(d.width, d.height)/2).iterations(10))
                     .on("tick", ticked);
             }
