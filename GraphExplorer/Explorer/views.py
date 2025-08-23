@@ -262,3 +262,10 @@ def delete_vertex(request):
             return JsonResponse({"output": "Invalid request"}, status=400)
 
     return JsonResponse({"output": "Invalid method"}, status=405)
+
+@csrf_exempt
+def get_graph_data(request):
+    if request.method == "GET":
+        data = platform.get_graph_data()
+        return JsonResponse(data, status=200)
+    return JsonResponse({"output": "Invalid method"}, status=405)
