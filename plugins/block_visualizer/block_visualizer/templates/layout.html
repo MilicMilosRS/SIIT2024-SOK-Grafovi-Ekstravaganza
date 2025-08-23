@@ -341,18 +341,6 @@
                 .classed("node-selected", true);
         }
 
-        // WebSocket updates
-        let socket = new WebSocket("ws://localhost:8765");
-        socket.onopen = () => console.log("Websocket connected")
-        socket.onerror = () => console.log("Error connecting websocket")
-        socket.onmessage = (event) => {
-            let msg = JSON.parse(event.data);
-            if (msg.action === "setDirected") isDirected = msg.value;
-            if (msg.action === "selectNode") selectNode(msg.node_id);
-            if (msg.action === "deselectNode") deselectNodes();
-            if (msg.action === "revisualize") revisualize(msg.nodes, msg.links);
-        };
-
         revisualize(nodes, links);
         if(initialSelection)
             selectNode(initialSelection)
@@ -365,5 +353,37 @@
             .duration(300)
             .call(mainZoom.transform, d3.zoomIdentity.translate(newX, newY).scale(t.k));
         });
+
+        document.addEventListener("graphStructureChanged", () => {
+            fetch(`/api/graph/data/`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then((res) => res.json())
+            .then((data) => {
+                console.log(data)
+                revisualize(data.nodes, data.links)
+            })
+        })
+
+        document.addEventListener("nodeSelectionChanged", ()=>{
+            fetch(`select/`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then((res) => {
+                if (res.ok){
+                    return res.json()
+                }else{
+                    throw new Error("Error 404")
+                }
+            })
+            .then((data) => selectNode(data.node.id))
+            .catch(() => {})
+        })
     </script>
 </div>

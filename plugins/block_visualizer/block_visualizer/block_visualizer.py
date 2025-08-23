@@ -7,54 +7,13 @@ from graph_api import Graph, Node, GraphVisualizer
 
 class BlockVisualizer(GraphVisualizer):
     def __init__(self):
-        self.clients = set()
-        self.loop = None
-        self.server = None
+        pass
 
     def on_switched_to(self):
-        self.thread = threading.Thread(target=self._start_background_server, daemon=True)
-        self.thread.start()
-
-    def _start_background_server(self):
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        self.loop = loop
-
-        async def start():
-            self.server = await websockets.serve(self._handler, "localhost", 8765)
-
-        loop.run_until_complete(start())  # start the server
-        loop.run_forever()  
-        print("Server running")
+        pass
 
     def on_switched_from(self):
-        print("Switched from")
-        if self.loop and self.server:
-            asyncio.run_coroutine_threadsafe(self._shutdown_server(), self.loop).result()
-
-    async def _shutdown_server(self):
-        print("Shutting down server...")
-        self.server.close()
-        await self.server.wait_closed()
-        self.loop.call_soon_threadsafe(self.loop.stop)
-
-
-    async def _handler(self, websocket):
-        self.clients.add(websocket)
-        try:
-            await websocket.wait_closed()
-        finally:
-            self.clients.remove(websocket)
-
-    def _send_update(self, update: dict):
-        """Send update to all connected clients from sync code."""
-        if self.loop:
-            asyncio.run_coroutine_threadsafe(self._send_update_async(update), self.loop)
-
-    async def _send_update_async(self, update: dict):
-        if self.clients:
-            msg = json.dumps(update)
-            await asyncio.gather(*(client.send(msg) for client in self.clients))
+        pass
 
     def visualize_graph(self, g: Graph, selected_node: Node) -> str:
         parsedNodes = []
@@ -78,75 +37,26 @@ class BlockVisualizer(GraphVisualizer):
         return html
 
     def add_node(self, node: Node):
-        print("adding node")
-        self._send_update({
-            "action": "addNode",
-            "node": {"id": node.get_id(), **node._attributes}
-        })
+        pass
 
     def edit_node(self, node: Node):
-        self._send_update({
-            "action": "editNode",
-            "node": {"id": node.get_id(), **node._attributes}
-        })
+        pass
 
     def remove_node(self, node: Node):
-        self._send_update({
-            "action": "removeNode",
-            "id": node.get_id()
-        })
+        pass
 
     def add_link(self, id_source: str, id_target: str, **attrs):
-        self._send_update({
-            "action": "addLink",
-            "source": id_source,
-            "target": id_target,
-            "attrs": attrs
-        })
+        pass
 
     def edit_link(self, id_source: str, id_target: str, **attrs):
-        self._send_update({
-            "action": "editLink",
-            "source": id_source,
-            "target": id_target,
-            "attrs": attrs
-        })
+        pass
 
     def remove_link(self, id_source: str, id_target: str):
-        self._send_update({
-            "action": "removeLink",
-            "source": id_source,
-            "target": id_target
-        })
+        pass
 
     def on_selection_changed(self, node):
-        if node is not None:
-            self._send_update({
-                "action": "selectNode",
-                "node_id": node.get_id()
-            })
-        else:
-            self._send_update({
-                "action": "deselectNode"
-            })
+        pass
 
     #Visualize the graph dynamically, without returning a whole new html page
     def revisualize_graph(self, graph: Graph):
-        parsedNodes = []
-        for node in graph._vertices.values():
-            parsedNodes.append({"attributes": node._attributes})
-
-        parsedLinks = []
-        for source, targets in graph._edges.items():
-            for target in targets:
-                parsedLinks.append({"source": source, "target": target, "attrs": graph._edges[source][target]})
-
-        self._send_update({
-            "action": "setDirected",
-            "value": graph._is_directed
-        })
-        self._send_update({
-            "action": "revisualize",
-            "nodes": parsedNodes,
-            "links": parsedLinks
-        })
+        pass

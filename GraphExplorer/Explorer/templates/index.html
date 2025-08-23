@@ -160,6 +160,7 @@
                         outputDiv.innerHTML += `<div>> ${command}</div>`;
                         outputDiv.innerHTML += `<div>${data.output}</div>`;
                         outputDiv.scrollTop = outputDiv.scrollHeight;
+                        document.dispatchEvent(new CustomEvent("graphStructureChanged"));
                     })
                     .catch(() => {
                         const outputDiv = document.getElementById('cli-output');
@@ -241,7 +242,10 @@
                                         'Content-Type': 'application/json',
                                         'X-CSRFToken': '{{ csrf_token }}' },
                                     body: JSON.stringify({index: currentTagCount})
-                            }).then(tag.remove())
+                            }).then(() => {
+                                tag.remove()
+                                document.dispatchEvent(new CustomEvent("graphStructureChanged"));
+                            })
                         });
 
                     wrapper.insertBefore(tag, input);

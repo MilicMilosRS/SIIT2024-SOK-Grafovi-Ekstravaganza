@@ -120,6 +120,7 @@
             if(!res.ok){
                 errorDiv.textContent = "Error updating vertex: " + err.message;
                 errorDiv.style.display = "block";
+                document.dispatchEvent(new CustomEvent("graphStructureChanged"));
             }else{
                 this.closest('dialog').close();
             }

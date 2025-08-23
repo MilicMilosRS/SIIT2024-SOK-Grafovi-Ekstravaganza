@@ -37,6 +37,20 @@ class Platform():
         self.visualizer.revisualize_graph(self.graph)
 
     #Graph stuff
+    
+    #Returns a json with all nodes, edges, and their attributes
+    def get_graph_data(self):
+        parsedNodes = []
+        for node in self._filtered_graph._vertices.values():
+            parsedNodes.append({"attributes": node._attributes})
+
+        parsedLinks = []
+        for source, targets in self._filtered_graph._edges.items():
+            for target in targets:
+                parsedLinks.append({"source": source, "target": target, "attrs": self._filtered_graph._edges[source][target]})
+        
+        return {'nodes': parsedNodes, 'links': parsedLinks}
+
     def add_vertex(self, vertex: Node) -> bool:
         if not self.graph.add_vertex(vertex):
             return False
