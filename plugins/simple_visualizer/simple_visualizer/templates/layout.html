@@ -54,6 +54,18 @@
         </svg>
 
         <div id="line_attrs"></div>
+        <div id="node-tooltip" style="
+            position: absolute;
+            visibility: hidden;
+            background-color: #fffbe7;
+            border: 1px solid #aaa;
+            border-radius: 6px;
+            padding: 8px;
+            font-size: 13px;
+            pointer-events: none;
+            z-index: 10;
+            box-shadow: 0 0 6px rgba(0,0,0,0.3);">
+        </div>
     </div>
 
     <script>
@@ -146,6 +158,24 @@
                     })
                     .finally(() => {document.dispatchEvent(new CustomEvent("nodeSelectionChanged"))})
                     event.stopPropagation();
+                }).on("mouseover", function(event, d) {
+                    const tooltip = d3.select("#node-tooltip");
+                    const html = Object.entries(d.attributes || {})
+                        .map(([k, v]) => `<div><strong>${k}</strong>: ${v}</div>`).join("");
+
+                    tooltip.html(html).style("visibility", "visible");
+
+                    const transform = d3.zoomTransform(svg.node());
+
+                    const screenX = transform.applyX(d.x + d.width / 2);
+                    const screenY = transform.applyY(d.y);
+
+                    tooltip
+                        .style("left", `${screenX}px`)
+                        .style("top", `${screenY - 40}px`);
+                })
+                .on("mouseout", function(event, d) {
+                    d3.select("#node-tooltip").style("visibility", "hidden");
                 });
 
             foEnter.append("xhtml:div")
