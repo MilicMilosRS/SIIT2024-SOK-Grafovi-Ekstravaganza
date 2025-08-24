@@ -186,7 +186,7 @@ class Platform():
                     # print(attr in node._attributes)
                 self._filtered_graph._vertices = {
                     key: node for key, node in self._filtered_graph._vertices.items()
-                    if attr in node._attributes and operand(node[attr], value)
+                    if attr in node._attributes and operand(node._attributes[attr], value)
                 }
                 
             

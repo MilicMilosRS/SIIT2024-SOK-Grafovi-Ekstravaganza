@@ -213,43 +213,56 @@
                 }
 
                 if (valid) {
-                    const tag = document.createElement('div');
-                    tag.textContent = value;
-                    tag.style.padding = '5px 10px';
-                    tag.style.background = 'lightgray';
-                    tag.style.borderRadius = '20px';
-                    tag.style.display = 'inline-flex';
-                    tag.style.alignItems = 'center';
-                    tag.style.gap = '5px';
+                    callback.then(res => {
+                        if (res.ok) {
+                            document.dispatchEvent(new CustomEvent("graphStructureChanged"))
 
-                    let currentTagCount = wrapper.querySelectorAll('div').length;
+                            const tag = document.createElement('div');
+                            tag.className = "filter-holder"
+                            tag.textContent = value;
+                            tag.style.padding = '5px 10px';
+                            tag.style.background = 'lightgray';
+                            tag.style.borderRadius = '20px';
+                            tag.style.display = 'inline-flex';
+                            tag.style.alignItems = 'center';
+                            tag.style.gap = '5px';
 
-                    const closeButton = document.createElement('span');
-                        closeButton.textContent = 'X';
-                        closeButton.style.cursor = 'pointer';
-                        closeButton.style.padding = '0 5px';
-                        closeButton.style.background = 'red';
-                        closeButton.style.color = 'white';
-                        closeButton.style.borderRadius = '50%';
-                        closeButton.style.fontWeight = 'bold';
+                            let currentTagCount = wrapper.querySelectorAll('div').length;
 
-                        tag.appendChild(closeButton);
+                            const closeButton = document.createElement('span');
+                                closeButton.textContent = 'X';
+                                closeButton.style.cursor = 'pointer';
+                                closeButton.style.padding = '0 5px';
+                                closeButton.style.background = 'red';
+                                closeButton.style.color = 'white';
+                                closeButton.style.borderRadius = '50%';
+                                closeButton.style.fontWeight = 'bold';
 
-                        closeButton.addEventListener('click', function() {
-                            fetch('remove-filter', {
-                                    method: 'POST',
-                                    headers: {
-                                        'Content-Type': 'application/json',
-                                        'X-CSRFToken': '{{ csrf_token }}' },
-                                    body: JSON.stringify({index: currentTagCount})
-                            }).then(() => {
-                                tag.remove()
-                                document.dispatchEvent(new CustomEvent("graphStructureChanged"));
-                            })
-                        });
+                                tag.appendChild(closeButton);
 
-                    wrapper.insertBefore(tag, input);
-                    this.value = '';
+                                closeButton.addEventListener('click', (e) => {
+                                    const tagDiv = e.target.closest('.filter-holder');
+                                    const parentDiv = document.getElementById('tag-input-wrapper');
+                                    const tagIndex = Array.from(parentDiv.children).indexOf(tagDiv);
+                                    fetch('remove-filter', {
+                                            method: 'POST',
+                                            headers: {
+                                                'Content-Type': 'application/json',
+                                                'X-CSRFToken': '{{ csrf_token }}' },
+                                            body: JSON.stringify({index: tagIndex})
+                                    }).then(res => {
+                                        if (res.ok) {
+                                            tag.remove()
+                                            document.dispatchEvent(new CustomEvent("graphStructureChanged"));
+                                        }
+                                    })
+                                });
+
+                            wrapper.insertBefore(tag, input);
+                            this.value = '';
+                        }
+                    })
+                    
                 }
                 
             }
@@ -275,6 +288,7 @@
                         }
                         const tag = document.createElement('div');
                         tag.textContent = value;
+                        tag.className = "filter-holder"
                         tag.style.padding = '5px 10px';
                         tag.style.background = 'lightgray';
                         tag.style.borderRadius = '20px';
@@ -293,18 +307,29 @@
 
                         tag.appendChild(closeButton);
 
-                        closeButton.addEventListener('click', function() {
+                        closeButton.addEventListener('click', (e) => {
+                            const tagDiv = e.target.closest('.filter-holder');
+                            const parentDiv = document.getElementById('tag-input-wrapper');
+                            const tagIndex = Array.from(parentDiv.children).indexOf(tagDiv);
                             fetch('remove-filter', {
                                     method: 'POST',
                                     headers: {
                                         'Content-Type': 'application/json',
                                         'X-CSRFToken': '{{ csrf_token }}' },
-                                    body: JSON.stringify({index: actualFilters[index].index})
-                            }).then(tag.remove())
+                                    body: JSON.stringify({index: tagIndex})
+                            }).then(res => {
+                                if (res.ok) {
+                                    tag.remove()
+                                    document.dispatchEvent(new CustomEvent("graphStructureChanged"));
+                                }
+                            })
                         });
 
                         wrapper.insertBefore(tag, input);
                         this.value = '';
+                    }
+                    if (actualFilters.length > 0) {
+                        document.dispatchEvent(new CustomEvent("graphStructureChanged"));
                     }
                 })
             }
