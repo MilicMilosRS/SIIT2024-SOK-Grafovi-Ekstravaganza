@@ -7,7 +7,7 @@ from django.http import JsonResponse, HttpResponse, StreamingHttpResponse
 import json
 from django.views.decorators.csrf import csrf_exempt
 
-from graph_api import Graph
+from graph_api import Graph,Node
 from graph_platform import Platform
 
 from .management.commands.CommandLine import CommandLine
@@ -47,7 +47,6 @@ def run_command(request):
         except Exception:
             return JsonResponse({"output": "Invalid request"}, status=400)
 
-        # Send the text input into your CommandLine
         output = cli_instance.process_command(command)
         return JsonResponse({"output": output})
 
