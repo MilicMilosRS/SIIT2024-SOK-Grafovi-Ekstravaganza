@@ -160,6 +160,7 @@
                         outputDiv.innerHTML += `<div style="white-space: pre-line;">${data.output}</div>`;
                         outputDiv.scrollTop = outputDiv.scrollHeight;
                         document.dispatchEvent(new CustomEvent("graphStructureChanged"));
+                        getFilters()
                     })
                     .catch(() => {
                         const outputDiv = document.getElementById('cli-output');
