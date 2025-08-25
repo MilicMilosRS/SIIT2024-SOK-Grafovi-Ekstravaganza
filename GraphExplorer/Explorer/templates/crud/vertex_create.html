@@ -113,6 +113,7 @@
         .then(res => {
             if(res.ok){
                 this.closest('dialog').close();
+                document.dispatchEvent(new CustomEvent("graphStructureChanged"));
             }
             else if (res.status == 409){
                 errorDiv.innerHTML = "Vertex with given id already exists"

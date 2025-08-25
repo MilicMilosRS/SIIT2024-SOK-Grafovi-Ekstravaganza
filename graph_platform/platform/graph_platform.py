@@ -2,7 +2,7 @@ from collections.abc import Callable
 import json
 from graph_api import Graph, GraphVisualizer, Node
 from TreeVIew.tree_view import TreeNode, ForestView
-from operator import eq, ne, gt, lt, ge, le
+from filters import Filter
 
 class Platform():
     def __init__(self, graph: Graph = Graph(False), visualizer: GraphVisualizer = None,file_path = None):
@@ -13,14 +13,6 @@ class Platform():
         self.visualizer = visualizer
         self.forestView = ForestView(graph)
         self.selected_node = None
-        self.operands = {
-            "eq": eq,
-            "ne": ne,
-            "gt": gt,
-            "lt": lt,
-            "ge": ge,
-            "le": le,
-        }
 
     #Graph update listener stuff
     def attach_update_listener(self, func: Callable[[None],None]):
@@ -37,6 +29,20 @@ class Platform():
             func()
 
     #Graph stuff
+    
+    #Returns a json with all nodes, edges, and their attributes
+    def get_graph_data(self):
+        parsedNodes = []
+        for node in self._filtered_graph._vertices.values():
+            parsedNodes.append({"attributes": node._attributes})
+
+        parsedLinks = []
+        for source, targets in self._filtered_graph._edges.items():
+            for target in targets:
+                parsedLinks.append({"source": source, "target": target, "attrs": self._filtered_graph._edges[source][target]})
+        
+        return {'nodes': parsedNodes, 'links': parsedLinks}
+
     def add_vertex(self, vertex: Node) -> bool:
         if not self.graph.add_vertex(vertex):
             return False
@@ -133,7 +139,7 @@ class Platform():
     def get_filters(self):
         return self.graph._filters
 
-    def add_filter(self, filter):
+    def add_filter(self, filter: Filter):
         self.graph.add_filter(filter)
         self.update_graph_view()
 
