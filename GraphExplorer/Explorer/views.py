@@ -21,10 +21,6 @@ graph_instance=js.parse_json()
 platform = Platform(graph_instance, SimpleVisualizer(), filepath)
 
 cli_instance = CommandLine(platform, filepath)
-# cli_instance.register_command("create", CreateCommand(platform))
-# cli_instance.register_command("delete", DeleteCommand(platform))
-# cli_instance.register_command("edit", EditCommand(platform))
-# cli_instance.register_command("save", SaveGraphCommand(platform))
 
 
 def HomePage(request):
