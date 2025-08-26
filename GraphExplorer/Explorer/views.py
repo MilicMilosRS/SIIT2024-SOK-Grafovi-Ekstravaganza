@@ -50,7 +50,6 @@ def run_command(request):
         except Exception:
             return JsonResponse({"output": "Invalid request"}, status=400)
 
-        # Send the text input into your CommandLine
         output = cli_instance.process_command(command)
         return JsonResponse({"output": output})
 

@@ -1,6 +1,6 @@
 import shlex
 
-from . import CreateCommand, EditCommand, DeleteCommand, SaveGraphCommand, FilterCommand, ClearCommand, HelpCommand
+from . import CreateCommand, EditCommand, DeleteCommand, SaveGraphCommand, FilterCommand, ClearCommand, HelpCommand, SearchCommand
 
 class CommandLine:
     def __init__(self, platform, file_path=None):
@@ -12,7 +12,7 @@ class CommandLine:
             "delete": DeleteCommand.DeleteCommand,
             "save-graph": SaveGraphCommand.SaveGraphCommand,
             "filter": FilterCommand.FilterCommand,
-            "search": FilterCommand.FilterCommand,
+            "search": SearchCommand.SearchCommand,
             "clear":  ClearCommand.ClearCommand,
             "clear-filter":  ClearCommand.ClearCommand,
             "help" : HelpCommand.HelpCommand
