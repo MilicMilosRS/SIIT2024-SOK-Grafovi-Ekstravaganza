@@ -1,19 +1,27 @@
+from abc import ABC
+from datasource_api import DataSourcePlugin
 import json
 import networkx as nx
 from graph_api import Node, Graph, GraphVisualizer
 from datetime import datetime
 
-class JSONDataSource:
-    def __init__(self, json_file):
-        self.json_file = json_file
+class JSONDataSource(DataSourcePlugin, ABC):
+    def __init__(self, **kwargs):
+        self.json_file = kwargs.get("file_path")
         self.graph = Graph(directed=True)
 
-    def parse_json(self):
+    def load_graph(self, **kwargs):
         with open(self.json_file, 'r') as f:
             data = json.load(f)
 
         self.build_graph(data)
         return self.graph
+    
+    def get_input_fields(self) -> list[str]:
+        """
+        Return list of fields the user must provide for this plugin.
+        """
+        return ["file_path"]
 
     def build_graph(self, data, parent_node: Node = None):
         if isinstance(data, dict):

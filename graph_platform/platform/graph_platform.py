@@ -189,3 +189,19 @@ class Platform():
                 for target in targets:
                     if target in node_mapping:
                         self._filtered_graph.create_edge(node_mapping[source].get_id(), node_mapping[target].get_id())
+
+
+    def set_graph(self, new_graph: Graph):
+        """
+        Replace the current graph with a new one.
+        Updates filtered_graph, forestView, visualizer, and notifies listeners.
+        """
+        self.graph = new_graph
+        self._filtered_graph = new_graph
+        self.forestView = ForestView(new_graph)
+        
+        if self.visualizer:
+            self.visualizer.revisualize_graph(new_graph)
+        
+        self.selected_node = None
+        self._graph_updated()

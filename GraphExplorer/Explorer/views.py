@@ -7,20 +7,23 @@ from django.http import JsonResponse, HttpResponse, StreamingHttpResponse
 import json
 from django.views.decorators.csrf import csrf_exempt
 
-from graph_api import Graph,Node
+from graph_api import Graph, Node
 from graph_platform import Platform
+from plugin_registry import get_plugin_names, create_plugin
+import os
+import tempfile
 
 from .management.commands.CommandLine import CommandLine
 from .management.commands import CreateCommand, EditCommand, DeleteCommand, SaveGraphCommand
 
 
-filepath = "../large_graph.json"
-js = JSONDataSource(filepath)
-graph_instance=js.parse_json()
+kwargs = {"file_path": "../large_graph.json"}
+js = JSONDataSource(**kwargs)
+graph_instance=js.load_graph()
 
-platform = Platform(graph_instance, SimpleVisualizer(), filepath)
+platform = Platform(graph_instance, SimpleVisualizer(), kwargs["file_path"])
 
-cli_instance = CommandLine(platform, filepath)
+cli_instance = CommandLine(platform, kwargs["file_path"])
 
 
 def HomePage(request):
@@ -272,3 +275,69 @@ def get_graph_data(request):
         data = platform.get_graph_data()
         return JsonResponse(data, status=200)
     return JsonResponse({"output": "Invalid method"}, status=405)
+
+
+def get_plugins(request):
+    plugins = get_plugin_names()
+    print('dsfdsf')
+    print(plugins)
+    return JsonResponse({"plugins": plugins})
+
+def plugin_fields(request):
+    plugin_name = request.GET.get("plugin")
+    if not plugin_name:
+        return JsonResponse({"fields": []})
+    
+    try:
+        plugin_instance = create_plugin(plugin_name)
+        fields = plugin_instance.get_input_fields()
+        return JsonResponse({"fields": fields})
+    except KeyError:
+        return JsonResponse({"fields": []})
+
+
+@csrf_exempt
+def load_graph(request):
+    if request.method != "POST":
+        return JsonResponse({"output": "Invalid method"}, status=405)
+
+    # Get plugin name from form data
+    plugin_name = request.POST.get("plugin")
+    if not plugin_name:
+        return JsonResponse({"output": "Plugin not specified"}, status=400)
+
+    try:
+        # Collect kwargs for plugin dynamically
+        kwargs = {}
+        for key in request.POST:
+            if key != "plugin":
+                kwargs[key] = request.POST.get(key)
+
+        # Handle uploaded files
+        for key in request.FILES:
+            uploaded_file = request.FILES[key]
+            # Save temporarily
+            with tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(uploaded_file.name)[1]) as tmp:
+                for chunk in uploaded_file.chunks():
+                    tmp.write(chunk)
+                tmp_path = tmp.name
+            kwargs[key] = tmp_path
+
+        # Instantiate plugin dynamically
+        plugin_instance = create_plugin(plugin_name, **kwargs)
+
+        # Load graph
+        new_graph = plugin_instance.load_graph(**kwargs)
+
+        # Update platform
+        platform.set_graph(new_graph)
+
+        # Cleanup temp files if any
+        for key in request.FILES:
+            os.remove(kwargs[key])
+
+        return JsonResponse({"success": True})
+
+    except Exception as e:
+        return JsonResponse({"output": str(e)}, status=500)
+
