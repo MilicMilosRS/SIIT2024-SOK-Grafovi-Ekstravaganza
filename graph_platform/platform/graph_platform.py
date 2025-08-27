@@ -87,8 +87,9 @@ class Platform():
         self.update_graph_view()
 
     def delete_edge(self, node1_id: str, node2_id: str) -> bool:
-        # self.graph.delete_edge(node1_id, node2_id)
-        return self.graph.delete_edge(node1_id, node2_id)
+        ret = self.graph.delete_edge(node1_id, node2_id)
+        self.update_graph_view()
+        return ret
 
     def create_edge(self, id1: str, id2: str, **attrs) -> None:
         self.graph.create_edge(id1, id2, **attrs)
