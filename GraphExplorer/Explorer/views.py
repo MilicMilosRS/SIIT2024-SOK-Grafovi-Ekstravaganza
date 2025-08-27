@@ -21,12 +21,9 @@ from .management.commands import CreateCommand, EditCommand, DeleteCommand, Save
 kwargs = {"file_path": "../large_graph.json"}
 js = JSONDataSource(**kwargs)
 graph_instance=js.load_graph()
-
 platform = Platform(graph_instance, SimpleVisualizer(), kwargs["file_path"])
-
 wm = WorkspaceManager()
 wm.create_workspace(graph_instance)
-
 cli_instance = CommandLine(platform, kwargs["file_path"])
 
 
@@ -283,13 +280,12 @@ def get_graph_data(request):
 
 
 
-
+#getting all installed data source plugins so we can give user options from which he can choose
 def get_plugins(request):
     plugins = get_plugin_names()
-    print('dsfdsf')
-    print(plugins)
     return JsonResponse({"plugins": plugins})
 
+#getting all fileds that need to be filled for chosen data source so UI can be generated dynamically
 def plugin_fields(request):
     plugin_name = request.GET.get("plugin")
     if not plugin_name:
@@ -303,44 +299,46 @@ def plugin_fields(request):
         return JsonResponse({"fields": []})
 
 
+
+#getting all data necessary to load graph and making new workspace with newly loaded graph
 @csrf_exempt
 def load_graph(request):
     if request.method != "POST":
         return JsonResponse({"output": "Invalid method"}, status=405)
 
-    # Get plugin name from form data
+    #getting plugin name from form data
     plugin_name = request.POST.get("plugin")
     if not plugin_name:
         return JsonResponse({"output": "Plugin not specified"}, status=400)
 
     try:
-        # Collect kwargs for plugin dynamically
+        #collecting kwargs for plugin dynamically
         kwargs = {}
         for key in request.POST:
             if key != "plugin":
                 kwargs[key] = request.POST.get(key)
 
-        # Handle uploaded files
+        #handling uploaded files
         for key in request.FILES:
             uploaded_file = request.FILES[key]
-            # Save temporarily
+            #saving temporarily
             with tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(uploaded_file.name)[1]) as tmp:
                 for chunk in uploaded_file.chunks():
                     tmp.write(chunk)
                 tmp_path = tmp.name
             kwargs[key] = tmp_path
 
-        # Instantiate plugin dynamically
+        #instantiating plugin dynamically
         plugin_instance = create_plugin(plugin_name, **kwargs)
 
-        # Load graph
+        #loading graph
         new_graph = plugin_instance.load_graph(**kwargs)
 
-        # Create a new workspace using WorkspaceManager
-        manager = WorkspaceManager()  # singleton instance
+        #creating a new workspace using WorkspaceManager
+        manager = WorkspaceManager()
         wid, workspace = manager.create_workspace(graph=new_graph)
 
-        # Cleanup temp files if any
+        #cleaning up temp files if any
         for key in request.FILES:
             os.remove(kwargs[key])
 
@@ -372,7 +370,6 @@ def get_workspaces(request):
 def switch_workspace(request):
     """
     Switches the active workspace.
-    Expects JSON: { "wid": "workspace1" }
     """
     workspace_manager = WorkspaceManager()
     if request.method != "POST":
@@ -386,7 +383,6 @@ def switch_workspace(request):
             return JsonResponse({"output": "Workspace not found"}, status=404)
 
         workspace_manager.switch_workspace(wid)
-        print(wid)
         return JsonResponse({"active_wid": wid})
     except Exception as e:
         return JsonResponse({"output": str(e)}, status=500)
@@ -395,7 +391,6 @@ def switch_workspace(request):
 def close_workspace(request):
     """
     Closes a workspace.
-    Expects JSON: { "wid": "workspace1" }
     """
     workspace_manager = WorkspaceManager()
     if request.method != "POST":

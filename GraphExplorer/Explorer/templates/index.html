@@ -276,6 +276,8 @@
                             'X-CSRFToken': '{{ csrf_token }}' }
                 }).then(res => res.json())
                 .then(filters => {
+                    const divs = wrapper.querySelectorAll('div');
+                    divs.forEach(div => div.remove());
                     actualFilters = filters.filters
                     for (let index = 0; index < actualFilters.length; index++) {
                         let filter = actualFilters[index];
@@ -334,6 +336,11 @@
                 })
             }
             getFilters();
+
+            document.addEventListener("refreshFilters", () => {
+                getFilters();
+            });
+
         
         </script>
     </body>

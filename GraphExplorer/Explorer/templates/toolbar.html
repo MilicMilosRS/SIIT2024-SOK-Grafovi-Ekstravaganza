@@ -9,10 +9,48 @@
 
     .crudButton{
         padding: 5px;
+        padding-left: 10px;
+        padding-right: 10px;
         background-color: rgba(255, 255, 255, 0.205);
-        border: solid black 2px;
+        border: solid black 3px;
         border-radius: 15px;
     }
+
+
+
+
+
+    .plugin-select-container {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 5px 10px;
+        background-color: rgba(255, 255, 255, 0.205);
+        border: solid black 3px;
+        border-radius: 15px;
+        font-size: 14px;
+    }
+
+    .plugin-select-container label {
+        font-weight: bold;
+        margin-right: 5px;
+    }
+
+    #pluginSelect {
+        padding: 4px 8px;
+        border: 1px solid #bbb;
+        border-radius: 8px;
+        background: #e8a863;
+        cursor: pointer;
+        font-size: 14px;
+        outline: none;
+        transition: background 0.2s ease;
+    }
+
+    #pluginSelect:hover {
+        background: #fd9533;
+    }
+
 
 
 
@@ -20,36 +58,18 @@
         display: flex;
         align-items: center;
         gap: 10px;
-        width: 550px;          /* fixed width */
-        overflow-x: auto;      /* horizontal scroll if too many tabs */
+        width: 550px;
+        overflow-x: auto;
         white-space: nowrap;
         padding: 3px;
         border: 1px solid #ccc;
         border-radius: 6px;
-        background: #f39551;
+        background-color: rgba(255, 255, 255, 0.205);
+        border: solid black 3px;
         border-radius: 10px;
 
         scrollbar-width: thin;
-        scrollbar-color: #999 #f0f0f0;
-    }
-
-    /* For Webkit browsers (Chrome, Edge, Safari) */
-    .workspace-tabs::-webkit-scrollbar {
-        height: 6px;             /* slim bar */
-    }
-
-    .workspace-tabs::-webkit-scrollbar-track {
-        background: #f0f0f0;     /* track color */
-        border-radius: 4px;
-    }
-
-    .workspace-tabs::-webkit-scrollbar-thumb {
-        background: #999;        /* thumb color */
-        border-radius: 4px;
-    }
-
-    .workspace-tabs::-webkit-scrollbar-thumb:hover {
-        background: #666;        /* darker on hover */
+        scrollbar-color: #e88b35 #e8a863;
     }
 
     .workspace-tab {
@@ -85,35 +105,26 @@
     <button id="toolbar-edit" class="crudButton" onclick="openVertexEditDialog(selectedNode)">Edit</button>
     <button id="toolbar-delete" class="crudButton" onclick="deleteSelected()">Delete</button>
 
-    <div>
-        <label>Data Source Plugin:
-            <select id="pluginSelect"></select>
-        </label>
+    <div class="plugin-select-container">
+        <label for="pluginSelect">Data Source:</label>
+        <select id="pluginSelect"></select>
     </div>
-
-
-
 
     <div class="workspace-tabs" id="workspaceTabs">
         <div class="workspace-tab active">Workspace 1 <span class="close-btn">×</span></div>
     </div>
     <button id="addWorkspaceBtn" class="crudButton">+ Add Workspace</button>
 
-
-
-
-
     <dialog id="loadGraphDialog">
         <h3>Load Graph</h3>
         <form id="loadGraphForm">
-            <div id="pluginInputs"></div> <!--dynamic inputs-->
+            <div id="pluginInputs"></div>
             <menu>
                 <button type="reset" onclick="this.closest('dialog').close()">Cancel</button>
                 <button type="submit">Load</button>
             </menu>
         </form>
     </dialog>
-
 
     <dialog id="vertexDialog">
         {% include 'crud/vertex_create.html' %}
@@ -124,7 +135,7 @@
     </dialog>
 
     <script>
-        /*fetching all data source plugins*/
+        //fetching all data source plugins
         async function fetchPlugins() {
             const res = await fetch('get-plugins/');
             const data = await res.json();
@@ -139,6 +150,7 @@
         }
         fetchPlugins();
 
+        //opening dialog for selecting data from selected data source
         document.getElementById('addWorkspaceBtn').addEventListener('click', async () => {
             const pluginName = document.getElementById('pluginSelect').value;
             if (!pluginName) {
@@ -146,7 +158,7 @@
                 return;
             }
 
-            // fetch the input fields for that plugin
+            //fetching the input fields for that plugin
             const res = await fetch(`/plugin-fields/?plugin=${pluginName}`);
             const data = await res.json();
 
@@ -175,19 +187,20 @@
                 container.appendChild(document.createElement('br'));
             });
 
-            // open the existing dialog
+            //opening the existing dialog
             document.getElementById('loadGraphDialog').showModal();
         });
 
         const tabsContainer = document.getElementById("workspaceTabs");
         let activeWorkspaceId = null;
 
+        //initialization of workspaces if we refresh the page
         async function initWorkspaces() {
             try {
                 const res = await fetch('/get-workspaces/');
                 const data = await res.json();
 
-                // Set the active workspace from backend
+                //setting the active workspace from backend
                 activeWorkspaceId = data.active_wid;
 
                 const workspaces = data.workspaces;
@@ -219,7 +232,7 @@
         }
         initWorkspaces();
 
-        // Fetch all workspaces from the backend and render tabs
+        //fetching all workspaces from the backend and rendering tabs
         async function renderTabsFromBackend() {
             try {
                 const res = await fetch('/get-workspaces/');
@@ -254,7 +267,7 @@
             }
         }
 
-        // Set active workspace on backend and frontend
+        //setting active workspace on backend and frontend
         async function setActiveWorkspace(id) {
             try {
                 const res = await fetch('/switch-workspace/', {
@@ -267,6 +280,7 @@
                     activeWorkspaceId = id;
                     await renderTabsFromBackend();
                     document.dispatchEvent(new CustomEvent("graphStructureChanged"));
+                    document.dispatchEvent(new CustomEvent("refreshFilters"));
                     console.log("Switched to workspace:", id);
                 } else {
                     console.error("Failed to switch workspace");
@@ -277,7 +291,7 @@
             }
         }
 
-        // Close workspace via backend
+        //closing workspace
         async function closeWorkspace(id) {
             try {
                 const res = await fetch('/close-workspace/', {
@@ -287,11 +301,12 @@
                 });
 
                 if (res.ok) {
-                    // If we closed the active workspace, backend will have switched active to another
+                    //if we closed the active workspace, backend will switch active to another workspace
                     const data = await res.json();
                     activeWorkspaceId = data.active_wid || activeWorkspaceId;
                     await renderTabsFromBackend();
                     document.dispatchEvent(new CustomEvent("graphStructureChanged"));
+                    document.dispatchEvent(new CustomEvent("refreshFilters"))
                 } else {
                     console.error("Failed to close workspace");
                 }
@@ -301,6 +316,7 @@
             }
         }
 
+        //loading graph and making new workspace after giving valid data
         document.getElementById('loadGraphForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             const pluginName = document.getElementById('pluginSelect').value;
@@ -316,50 +332,11 @@
                 activeWorkspaceId = result.active_wid;
                 await renderTabsFromBackend();  // re-render tabs with backend state
                 document.dispatchEvent(new CustomEvent("graphStructureChanged"));
+                document.dispatchEvent(new CustomEvent("refreshFilters"))
             } else {
                 alert("Failed to load graph: " + result.output);
             }
         });
-
-/*document.getElementById('toolbar-load-graph').addEventListener('click', () => {
-            fetch('/get-plugins/')
-                .then(res => res.json())
-                .then(data => {
-                    const select = document.getElementById('pluginSelect');
-                    select.innerHTML = '';
-                    data.plugins.forEach(p => {
-                        const opt = document.createElement('option');
-                        opt.value = p;
-                        opt.textContent = p;
-                        select.appendChild(opt);
-                    });
-                    document.getElementById('loadGraphDialog').showModal();
-                });
-        });
-
-        document.getElementById('loadGraphForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            const plugin = document.getElementById('pluginSelect').value;
-            const fileInput = document.getElementById('dataFile');
-            const file = fileInput.files[0];
-
-            const formData = new FormData();
-            formData.append('plugin', plugin);
-            formData.append('file', file);
-
-            const res = await fetch('/load-graph/', {
-                method: 'POST',
-                body: formData
-            });
-
-            const result = await res.json();
-            if(res.ok){
-                this.closest('dialog').close();
-                document.dispatchEvent(new CustomEvent("graphStructureChanged"));
-            } else {
-                alert("Failed to load graph: " + result.output);
-            }
-        });*/
 
 
 

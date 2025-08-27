@@ -4,8 +4,6 @@ from graph_platform import Platform
 class Workspace:
     def __init__(self, graph=None):
         self.graph = graph
-        self.filtered_graph = graph
-        self.filters = []
 
 class WorkspaceManager:
     _instance = None
@@ -55,12 +53,9 @@ class WorkspaceManager:
     def _apply_to_platform(self, ws: Workspace):
         platform = Platform()  # singleton
         platform.set_graph(ws.graph)
-        #platform.set_filters(ws.filters)
-        platform._create_filtered_graph()
+        platform.update_graph_view()
         return
 
     def _save_from_platform(self, ws: Workspace):
         platform = Platform()
         ws.graph = platform.graph
-        ws.filtered_graph = platform._filtered_graph
-        ws.filters = platform.get_filters()
