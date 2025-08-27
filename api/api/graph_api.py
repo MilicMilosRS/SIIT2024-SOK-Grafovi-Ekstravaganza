@@ -38,8 +38,6 @@ class Graph(object):
         self._edges = {}
         self._is_directed = directed
         self._filters = []
-        self._filtered_vertices = {}
-        self._filtered_edges = {}
 
     def add_vertex(self, vertex: Node) -> bool:
         if vertex.get_id() in self._vertices:
