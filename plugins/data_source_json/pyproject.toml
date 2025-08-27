@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "data_source_json"
+version = "0.1.1"
+description = "Data source loader from JSON"
+requires-python = ">=3.9"
+dependencies = ["graph-api"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["data_source_json*"]
+
+[project.entry-points."graph_platform.plugins"]
+json = "data_source_json.data_source_json:JSONDataSource"

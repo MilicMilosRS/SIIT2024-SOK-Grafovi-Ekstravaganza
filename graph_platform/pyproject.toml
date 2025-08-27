@@ -1,0 +1,18 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "graph_platform"
+version = "0.1.1"
+description = "Platform for manipulating graph data and communication between plugins"
+authors = [
+    { name = "Miloš Milić", email = "milicmilos.rs@gmail.com" }
+]
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+dependencies = ["graph-api"]
+
+[tool.setuptools.packages.find]
+where = ["platform"]

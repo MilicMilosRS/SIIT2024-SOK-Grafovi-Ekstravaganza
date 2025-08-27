@@ -1,0 +1,32 @@
+from django.urls import path
+from . import views
+from .views import HomePage
+
+urlpatterns = [
+    path('', HomePage, name='HomePage'),
+    path('run-command/', views.run_command, name='run_command'),
+    path('partial-graph', views.partial_graph_view, name='partial_graph'),
+    path('treeview/updates', views.sse_treeview_updates, name='treeview_updates'),
+    path('treeview/expand', views.expand_treeview_node, name='expand_treeview'),
+    path('treeview/collapse', views.collapse_treeview_node, name='expand_treeview'),
+    path('select/<str:item_id>/', views.select_node, name='select_node'),
+    path('deselect/', views.deselect_node, name='deselect_node'),
+    path('search/', views.search_graph, name="search"),
+    path('filter/', views.filter_graph, name="filter"),
+    path('get-filters', views.get_filters, name="get_filters"),
+    path('remove-filter', views.remove_filter, name="remove_filter"),
+    path('select/', views.get_selected_node, name='get_selection'),
+    path('deselect/', views.deselect_node, name='deselect_node'),
+    path('api/vertex/create/', views.create_vertex, name="create_vertex"),
+    path('api/vertex/edit/', views.edit_vertex, name="edit_vertex"),
+    path('api/vertex/delete/', views.delete_vertex, name="delete_vertex"),
+    path('api/graph/data/', views.get_graph_data, name="get_graph_data"),
+    #plugins for data source
+    path('get-plugins/', views.get_plugins, name="get_plugins"),
+    path('plugin-fields/', views.plugin_fields, name='plugin_fields'),
+    #loading of graph and working with workspaces
+    path('load-graph/', views.load_graph, name="load_graph"),
+    path('get-workspaces/', views.get_workspaces, name='get_workspaces'),
+    path('switch-workspace/', views.switch_workspace, name='switch_workspace'),
+    path('close-workspace/', views.close_workspace, name='close_workspace'),
+]

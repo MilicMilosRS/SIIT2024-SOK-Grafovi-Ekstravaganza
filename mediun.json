@@ -1,0 +1,165 @@
+{
+  "community": {
+    "members": [
+      {
+        "id": "b4b23bea-183c-4778-9303-85deca4867a9",
+        "name": "Person 33",
+        "age": 83,
+        "friends": [
+          {
+            "id": "086361c5-8bdd-4ab8-b4ea-5e33780eb714",
+            "name": "Friend 16",
+            "relationship": "colleague"
+          },
+          {
+            "id": "d64dc548-1241-4d05-938a-84a236c6a79a",
+            "name": "Friend 62",
+            "relationship": "family"
+          }
+        ]
+      },
+      {
+        "id": "3fc3d9f3-46ac-413c-a2bb-14a0894c8399",
+        "name": "Person 81",
+        "age": 50,
+        "friends": [
+          {
+            "id": "1af6f79f-ec76-46ec-9fe0-d27183c9a312",
+            "name": "Friend 59",
+            "relationship": "neighbor"
+          },
+          {
+            "id": "1cc7f1ca-192f-46fa-a5fe-1245ee8269e0",
+            "name": "Friend 70",
+            "relationship": "neighbor"
+          },
+          {
+            "id": "0d3c6f25-e9f2-43d1-b8d1-75b19e4f835b",
+            "name": "Friend 80",
+            "relationship": "colleague"
+          },
+          {
+            "id": "055ce27f-d978-4e84-994b-3173560009db",
+            "name": "Friend 73",
+            "relationship": "neighbor"
+          },
+          {
+            "id": "2e40a515-6437-4593-baa7-c5b85718222e",
+            "name": "Friend 52",
+            "relationship": "family"
+          }
+        ]
+      },
+      {
+        "id": "db9441d2-52de-40d6-b5c0-ff6b6e7507a3",
+        "name": "Person 27",
+        "age": 23,
+        "friends": [
+          {
+            "id": "6e79e771-1ef5-435f-872f-af14d24da58a",
+            "name": "Friend 65",
+            "relationship": "colleague"
+          },
+          {
+            "id": "017f1f0a-3fb4-41de-985f-000784d67214",
+            "name": "Friend 29",
+            "relationship": "neighbor"
+          },
+          {
+            "id": "5754e743-9c3f-4e95-b200-5013f74ba105",
+            "name": "Friend 36",
+            "relationship": "colleague"
+          },
+          {
+            "id": "d095ab82-adaa-4d18-81a9-afa2569219c5",
+            "name": "Friend 51",
+            "relationship": "neighbor"
+          }
+        ]
+      },
+      {
+        "id": "d9b10f30-3326-4214-9006-1792de9a0aaf",
+        "name": "Person 99",
+        "age": 20,
+        "friends": [
+          {
+            "id": "02c32cc6-957e-461d-8a67-ae02a4ed0374",
+            "name": "Friend 71",
+            "relationship": "colleague"
+          }
+        ]
+      },
+      {
+        "id": "eca1a53f-0340-48e9-95a4-dcb2a1ddc8d6",
+        "name": "Person 19",
+        "age": 42,
+        "friends": [
+          {
+            "id": "3ec6b23b-c8f8-4d20-8e74-9582c7e87b54",
+            "name": "Friend 54",
+            "relationship": "colleague"
+          },
+          {
+            "id": "8cca252c-9025-4bcc-9ef8-5dd977894470",
+            "name": "Friend 6",
+            "relationship": "colleague"
+          },
+          {
+            "id": "f82cb2d4-4c47-4bde-8f1c-1b74167aa67c",
+            "name": "Friend 83",
+            "relationship": "family"
+          }
+        ]
+      },
+      {
+        "id": "cfbbe19b-3c37-4c3b-96d3-4f0ab36f1a4f",
+        "name": "Person 45",
+        "age": 27,
+        "friends": [
+          {
+            "id": "41cfa10b-5a58-4f20-a231-324dd51a0747",
+            "name": "Friend 81",
+            "relationship": "neighbor"
+          },
+          {
+            "id": "2bf8f835-b967-4018-ab69-0a1be30db49c",
+            "name": "Friend 27",
+            "relationship": "family"
+          },
+          {
+            "id": "f3d7115d-a09f-4b9e-855b-f26a72853120",
+            "name": "Friend 92",
+            "relationship": "colleague"
+          },
+          {
+            "id": "35e34e74-71c5-4def-a522-015d79d9bcb0",
+            "name": "Friend 88",
+            "relationship": "colleague"
+          }
+        ]
+      },
+      {
+        "id": "a514ad51-c2b0-42c9-8cb2-7f5fd1ba9335",
+        "name": "Person 26",
+        "age": 76,
+        "friends": [
+          {
+            "id": "4fa8b2ab-e7e2-436c-be90-cd4a1a8cd244",
+            "name": "Friend 79",
+            "relationship": "family"
+          },
+          {
+            "id": "220654e3-eb87-47d7-95be-7175c3e58152",
+            "name": "Friend 57",
+            "relationship": "family"
+          },
+          {
+            "id": "0f57beb1-8733-43fb-9713-d291b15d3ce5",
+            "name": "Friend 77",
+            "relationship": "colleague"
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,140 @@
+<h2>Edit Vertex</h2>
+<form method="dialog" id="vertexEditForm">
+    <label>
+        Vertex ID:
+        <input type="text" id="editVertexId" name="id" readonly>
+    </label>
+
+    <div id="editAttrContainer"></div>
+
+    <button type="button" onclick="addEditAttribute()">+ Add Attribute</button>
+    <hr>
+    <menu>
+        <button type="reset" onclick="this.closest('dialog').close()">Cancel</button>
+        <button type="submit">Save</button>
+    </menu>
+
+    <div id="editFetchError" style="color:red; margin-top:10px; display:none;"></div>
+</form>
+<script>
+    let editAttrCount = 0;
+
+    // Reset form and container
+    function resetEditDialog() {
+    const form = document.getElementById('vertexEditForm');
+    const container = document.getElementById('editAttrContainer');
+    form.reset();
+    container.innerHTML = "";
+    editAttrCount = 0;
+    document.getElementById('editFetchError').style.display = 'none';
+    }
+
+    // Open the dialog and pre-fill data
+    function openVertexEditDialog(vertex) {
+        resetEditDialog();
+
+        document.getElementById('editVertexId').value = vertex.id;
+
+        for (const [name, value] of Object.entries(vertex)) {
+            if(name != "id"){
+                addEditAttribute(name, value);
+            }
+        }
+
+        document.getElementById('vertexEditDialog').showModal();
+    }
+
+    // Add attribute row (optional name/value)
+    function addEditAttribute(name = "", value = "") {
+        editAttrCount++;
+        const container = document.getElementById('editAttrContainer');
+
+        const row = document.createElement('div');
+        row.className = 'attr-row';
+        let type = "string";
+
+        if (typeof value === "number") type = "number";
+        else if (value instanceof Date || !isNaN(Date.parse(value))) type = "date";
+
+        row.innerHTML = `
+            <input type="text" name="editAttrName${editAttrCount}" placeholder="Name" value="${name}" required>
+            <select name="editAttrType${editAttrCount}" onchange="changeEditAttrType(this, ${editAttrCount})">
+            <option value="string" ${type==='string'?'selected':''}>String</option>
+            <option value="number" ${type==='number'?'selected':''}>Number</option>
+            <option value="date" ${type==='date'?'selected':''}>Date</option>
+            </select>
+            <input type="text" name="editAttrValue${editAttrCount}" placeholder="Value" value="${type==='date' && value ? new Date(value).toISOString().substring(0,10) : value}" required>
+            <button type="button" onclick="this.parentElement.remove()">✖</button>
+        `;
+        container.appendChild(row);
+    }
+
+    function changeEditAttrType(select, count) {
+        const valueInput = select.parentElement.querySelector(`[name="editAttrValue${count}"]`);
+        if (select.value === "number") {
+            valueInput.type = "number";
+            valueInput.value = "";
+        } else if (select.value === "date") {
+            valueInput.type = "date";
+            valueInput.value = "";
+        } else {
+            valueInput.type = "text";
+            valueInput.value = "";
+        }
+    }
+
+    // Submit edited vertex
+    document.getElementById('vertexEditForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        const formData = new FormData(this);
+        const vertex = { id: formData.get("id"), attributes: {} };
+
+        for (let [key, val] of formData.entries()) {
+            if (key.startsWith("editAttrName")) {
+                const index = key.replace("editAttrName", "");
+                const name = val;
+                const type = formData.get("editAttrType" + index);
+                let value = formData.get("editAttrValue" + index);
+
+                if (type === "number") value = Number(value);
+                if (type === "date") value = new Date(value);
+
+                vertex.attributes[name] = value;
+            }
+        }
+
+        const errorDiv = document.getElementById('editFetchError');
+        errorDiv.style.display = 'none';
+
+        console.log(vertex)
+
+        fetch(`api/vertex/edit/`, {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(vertex)
+        })
+        .then(res => {
+            if(!res.ok){
+                errorDiv.textContent = "Error updating vertex: " + err.message;
+                errorDiv.style.display = "block";
+            }else{
+                document.dispatchEvent(new CustomEvent("graphStructureChanged"));
+                fetch(`/select/${encodeURIComponent(vertex.id)}/`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        }
+                    })
+                    .finally(() => {document.dispatchEvent(new CustomEvent("nodeSelectionChanged"))})
+                this.closest('dialog').close();
+            }
+        })
+        .catch(() => {
+            errorDiv.textContent = "Error updating vertex.";
+            errorDiv.style.display = "block";
+        })
+    })
+</script>

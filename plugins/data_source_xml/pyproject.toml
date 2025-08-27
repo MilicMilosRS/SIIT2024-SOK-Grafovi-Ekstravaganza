@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "data_source_xml"
+version = "0.1.1"
+description = "Data source loader from XML"
+requires-python = ">=3.9"
+dependencies = ["graph-api"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["data_source_xml*"]
+
+[project.entry-points."graph_platform.plugins"]
+xml = "data_source_xml.data_source_xml:XmlDataSourcePlugin"

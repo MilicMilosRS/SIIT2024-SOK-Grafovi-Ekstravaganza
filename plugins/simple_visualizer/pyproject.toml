@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "simple-visualizer"
+version = "0.0.1"
+description = "Simple visualizer plugin using Django templates and D3.js"
+authors = [
+    { name = "Matijas Levang", email = "micolevang@gmail.com" }
+]
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+dependencies = [
+    "graph-api",
+    "Django>=4.0"
+]
+
+[tool.setuptools.packages.find]
+where = ["simple_visualizer"]

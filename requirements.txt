@@ -1,0 +1,7 @@
+-e ./api
+-e ./graph_platform
+-e ./plugins/block_visualizer
+-e ./plugins/simple_visualizer
+-e ./plugins/data_source_json
+-e ./plugins/data_source_xml
+networkx
