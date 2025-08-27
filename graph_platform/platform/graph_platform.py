@@ -5,7 +5,20 @@ from TreeVIew.tree_view import TreeNode, ForestView
 from filters import Filter
 
 class Platform():
-    def __init__(self, graph: Graph = Graph(False), visualizer: GraphVisualizer = None,file_path = None):
+    _instance = None  # store the singleton instance
+
+    def __new__(cls, *args, **kwargs):
+        if cls._instance is None:
+            # first time: create instance
+            cls._instance = super().__new__(cls)
+        return cls._instance
+
+    def __init__(self, graph: Graph = Graph(False), visualizer: GraphVisualizer = None, file_path=None):
+        # prevent reinitialization on every call
+        if hasattr(self, "_initialized") and self._initialized:
+            return
+        self._initialized = True
+
         self.file_path = file_path
         self.graph_update_listeners = []
         self.graph = graph
@@ -14,7 +27,7 @@ class Platform():
         self.forestView = ForestView(graph)
         self.selected_node = None
 
-    #Graph update listener stuff
+    #graph update listener
     def attach_update_listener(self, func: Callable[[None],None]):
         if func not in self.graph_update_listeners:
             self.graph_update_listeners.append(func)
