@@ -120,8 +120,15 @@
             if(!res.ok){
                 errorDiv.textContent = "Error updating vertex: " + err.message;
                 errorDiv.style.display = "block";
-                document.dispatchEvent(new CustomEvent("graphStructureChanged"));
             }else{
+                document.dispatchEvent(new CustomEvent("graphStructureChanged"));
+                fetch(`/select/${encodeURIComponent(vertex.id)}/`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        }
+                    })
+                    .finally(() => {document.dispatchEvent(new CustomEvent("nodeSelectionChanged"))})
                 this.closest('dialog').close();
             }
         })

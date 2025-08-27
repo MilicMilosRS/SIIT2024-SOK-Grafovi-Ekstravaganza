@@ -199,11 +199,9 @@
             newNodes.forEach(n => {
                 let existing = nodes.find(x => x.id === n.attributes.id);
                 if (existing) {
-                    console.log(existing)
-                    console.log(n)
                     // Update attributes without overwriting x/y
                     existing.attributes = {}
-                    Object.keys(n.attributes).forEach(k => { existing.attributes[k] = n.attributes[k]; console.log(k) });
+                    Object.keys(n.attributes).forEach(k => { existing.attributes[k] = n.attributes[k]; });
                 } else {
                     // New node: assign random x/y
                     let node = {

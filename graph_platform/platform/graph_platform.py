@@ -5,7 +5,20 @@ from TreeVIew.tree_view import TreeNode, ForestView
 from filters import Filter
 
 class Platform():
-    def __init__(self, graph: Graph = Graph(False), visualizer: GraphVisualizer = None,file_path = None):
+    _instance = None  # store the singleton instance
+
+    def __new__(cls, *args, **kwargs):
+        if cls._instance is None:
+            # first time: create instance
+            cls._instance = super().__new__(cls)
+        return cls._instance
+
+    def __init__(self, graph: Graph = Graph(False), visualizer: GraphVisualizer = None, file_path=None):
+        # prevent reinitialization on every call
+        if hasattr(self, "_initialized") and self._initialized:
+            return
+        self._initialized = True
+
         self.file_path = file_path
         self.graph_update_listeners = []
         self.graph = graph
@@ -14,7 +27,7 @@ class Platform():
         self.forestView = ForestView(graph)
         self.selected_node = None
 
-    #Graph update listener stuff
+    #graph update listener
     def attach_update_listener(self, func: Callable[[None],None]):
         if func not in self.graph_update_listeners:
             self.graph_update_listeners.append(func)
@@ -47,40 +60,40 @@ class Platform():
         if not self.graph.add_vertex(vertex):
             return False
         self.visualizer.add_node(vertex)
-        self._graph_updated()
+        self.update_graph_view()
         return True
 
     def edit_vertex(self, vertex: Node) -> bool:
         if not self.graph.edit_vertex(vertex):
             return False
         self.visualizer.edit_node(vertex)
-        self._graph_updated()
+        self.update_graph_view()
         return True
 
     def create_vertex(self) -> Node:
         node = self.graph.create_vertex()
         self.visualizer.add_node(node)
-        self._graph_updated()
+        self.update_graph_view()
         return node
     
     def delete_vertex(self, vertex: Node) -> None:
         self.graph.delete_vertex(vertex)
         self.visualizer.remove_node(vertex)
-        self._graph_updated()
+        self.update_graph_view()
     
-    def edit_edge(self, old_source: str, new_target: str) -> None:
+    def edit_edge(self, old_source: str, new_target: str, **attrs) -> None:
         self.graph.edit_edge(old_source, new_target)
         self.visualizer.edit_link(old_source, new_target)
-        self._graph_updated()
+        self.update_graph_view()
 
     def delete_edge(self, node1_id: str, node2_id: str) -> bool:
         self.graph.delete_edge(node1_id, node2_id)
         return self.graph.delete_edge(node1_id, node2_id)
 
-    def create_edge(self, id1: str, id2: str) -> None:
-        self.graph.create_edge(id1, id2)
+    def create_edge(self, id1: str, id2: str, **attrs) -> None:
+        self.graph.create_edge(id1, id2, **attrs)
         self.visualizer.add_link(id1, id2)
-        self._graph_updated()
+        self.update_graph_view()
 
     #TreeView stuff
     def get_tree_view(self) -> str:
@@ -91,6 +104,7 @@ class Platform():
         return data
     
     def expand_tree_view(self, tree_id: str):
+        print("Tree id " + tree_id)
         self.forestView.expand_node_by_tree_id(tree_id)
         self._graph_updated()
 
@@ -172,7 +186,7 @@ class Platform():
             if source in node_mapping:
                 for target in targets:
                     if target in node_mapping:
-                        self._filtered_graph.create_edge(node_mapping[source].get_id(), node_mapping[target].get_id())
+                        self._filtered_graph.create_edge(node_mapping[source].get_id(), node_mapping[target].get_id(), **self.graph._edges[source][target])
 
 
     def set_graph(self, new_graph: Graph):
@@ -188,4 +202,4 @@ class Platform():
             self.visualizer.revisualize_graph(new_graph)
         
         self.selected_node = None
-        self._graph_updated()
+        self.update_graph_view()

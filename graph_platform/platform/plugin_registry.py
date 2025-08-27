@@ -10,7 +10,7 @@ def load_plugins() -> Dict[str, Type[DataSourcePlugin]]:
     Returns a dict mapping plugin name -> class.
     """
     plugins = {}
-    # Look for entry points declared under group "graph_platform.plugins"
+    #look for entry points declared under group "graph_platform.plugins"
     for ep in entry_points(group="graph_platform.plugins"):
         plugin_cls = ep.load()
         if issubclass(plugin_cls, DataSourcePlugin):
@@ -18,12 +18,12 @@ def load_plugins() -> Dict[str, Type[DataSourcePlugin]]:
     return plugins
 
 
-# This acts as the Registry (central plugin map).
+#central plugin map
 PLUGINS: Dict[str, Type[DataSourcePlugin]] = load_plugins()
 
 
 def get_plugin_names():
-    """Return list of available plugin names for UI dropdowns."""
+    """Return list of available plugin names."""
     return list(PLUGINS.keys())
 
 

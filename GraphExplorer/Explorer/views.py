@@ -9,6 +9,7 @@ from django.views.decorators.csrf import csrf_exempt
 
 from graph_api import Graph, Node
 from graph_platform import Platform
+from workspace import WorkspaceManager
 from plugin_registry import get_plugin_names, create_plugin
 import os
 import tempfile
@@ -20,9 +21,9 @@ from .management.commands import CreateCommand, EditCommand, DeleteCommand, Save
 kwargs = {"file_path": "../large_graph.json"}
 js = JSONDataSource(**kwargs)
 graph_instance=js.load_graph()
-
 platform = Platform(graph_instance, SimpleVisualizer(), kwargs["file_path"])
-
+wm = WorkspaceManager()
+wm.create_workspace(graph_instance)
 cli_instance = CommandLine(platform, kwargs["file_path"])
 
 
@@ -277,12 +278,14 @@ def get_graph_data(request):
     return JsonResponse({"output": "Invalid method"}, status=405)
 
 
+
+
+#getting all installed data source plugins so we can give user options from which he can choose
 def get_plugins(request):
     plugins = get_plugin_names()
-    print('dsfdsf')
-    print(plugins)
     return JsonResponse({"plugins": plugins})
 
+#getting all fileds that need to be filled for chosen data source so UI can be generated dynamically
 def plugin_fields(request):
     plugin_name = request.GET.get("plugin")
     if not plugin_name:
@@ -296,48 +299,111 @@ def plugin_fields(request):
         return JsonResponse({"fields": []})
 
 
+
+#getting all data necessary to load graph and making new workspace with newly loaded graph
 @csrf_exempt
 def load_graph(request):
     if request.method != "POST":
         return JsonResponse({"output": "Invalid method"}, status=405)
 
-    # Get plugin name from form data
+    #getting plugin name from form data
     plugin_name = request.POST.get("plugin")
     if not plugin_name:
         return JsonResponse({"output": "Plugin not specified"}, status=400)
 
     try:
-        # Collect kwargs for plugin dynamically
+        #collecting kwargs for plugin dynamically
         kwargs = {}
         for key in request.POST:
             if key != "plugin":
                 kwargs[key] = request.POST.get(key)
 
-        # Handle uploaded files
+        #handling uploaded files
         for key in request.FILES:
             uploaded_file = request.FILES[key]
-            # Save temporarily
+            #saving temporarily
             with tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(uploaded_file.name)[1]) as tmp:
                 for chunk in uploaded_file.chunks():
                     tmp.write(chunk)
                 tmp_path = tmp.name
             kwargs[key] = tmp_path
 
-        # Instantiate plugin dynamically
+        #instantiating plugin dynamically
         plugin_instance = create_plugin(plugin_name, **kwargs)
 
-        # Load graph
+        #loading graph
         new_graph = plugin_instance.load_graph(**kwargs)
 
-        # Update platform
-        platform.set_graph(new_graph)
+        #creating a new workspace using WorkspaceManager
+        manager = WorkspaceManager()
+        wid, workspace = manager.create_workspace(graph=new_graph)
 
-        # Cleanup temp files if any
+        #cleaning up temp files if any
         for key in request.FILES:
             os.remove(kwargs[key])
 
-        return JsonResponse({"success": True})
+        return JsonResponse({
+            "success": True,
+            "workspace_id": wid,
+            "active_wid": manager.active_id
+        })
+    
+    except Exception as e:
+        return JsonResponse({"output": str(e)}, status=500)
+    
 
+
+
+
+
+def get_workspaces(request):
+    """
+    Returns all workspaces and the active workspace.
+    """
+    workspace_manager = WorkspaceManager()
+    all_ws = workspace_manager.get_all_workspaces()
+    ws_list = [{"id": wid, "name": f"Workspace {i+1}"} for i, wid in enumerate(all_ws.keys())]
+    return JsonResponse({"workspaces": ws_list, "active_wid": workspace_manager.active_id})
+
+
+@csrf_exempt
+def switch_workspace(request):
+    """
+    Switches the active workspace.
+    """
+    workspace_manager = WorkspaceManager()
+    if request.method != "POST":
+        return JsonResponse({"output": "Invalid method"}, status=405)
+
+    import json
+    try:
+        data = json.loads(request.body)
+        wid = data.get("wid")
+        if not wid or wid not in workspace_manager.workspaces:
+            return JsonResponse({"output": "Workspace not found"}, status=404)
+
+        workspace_manager.switch_workspace(wid)
+        return JsonResponse({"active_wid": wid})
     except Exception as e:
         return JsonResponse({"output": str(e)}, status=500)
 
+@csrf_exempt
+def close_workspace(request):
+    """
+    Closes a workspace.
+    """
+    workspace_manager = WorkspaceManager()
+    if request.method != "POST":
+        return JsonResponse({"output": "Invalid method"}, status=405)
+
+    import json
+    try:
+        data = json.loads(request.body)
+        wid = data.get("wid")
+        if not wid or wid not in workspace_manager.workspaces:
+            return JsonResponse({"output": "Workspace not found"}, status=404)
+
+        workspace_manager.close_workspace(wid)
+        return JsonResponse({"active_wid": workspace_manager.active_id})
+    except Exception as e:
+        return JsonResponse({"output": str(e)}, status=500)
