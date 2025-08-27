@@ -4,3 +4,4 @@
 -e ./plugins/simple_visualizer
 -e ./plugins/data_source_json
 -e ./plugins/data_source_xml
+networkx

@@ -160,17 +160,6 @@ class Platform():
     def remove_filter(self, index: int):
         self.graph.remove_filter(index)
         self.update_graph_view()
-
-    def get_filters(self):
-        return self.graph._filters
-
-    def add_filter(self, filter: Filter):
-        self.graph.add_filter(filter)
-        self.update_graph_view()
-
-    def remove_filter(self, index: int):
-        self.graph.remove_filter(index)
-        self.update_graph_view()
     
     def _create_filtered_graph(self):
         self._filtered_graph = Graph(self.graph._is_directed)
