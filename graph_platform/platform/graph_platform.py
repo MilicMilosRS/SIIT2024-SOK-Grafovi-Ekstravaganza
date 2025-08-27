@@ -81,7 +81,7 @@ class Platform():
         self.visualizer.remove_node(vertex)
         self.update_graph_view()
     
-    def edit_edge(self, old_source: str, new_target: str) -> None:
+    def edit_edge(self, old_source: str, new_target: str, **attrs) -> None:
         self.graph.edit_edge(old_source, new_target)
         self.visualizer.edit_link(old_source, new_target)
         self.update_graph_view()
@@ -90,8 +90,8 @@ class Platform():
         self.graph.delete_edge(node1_id, node2_id)
         return self.graph.delete_edge(node1_id, node2_id)
 
-    def create_edge(self, id1: str, id2: str) -> None:
-        self.graph.create_edge(id1, id2)
+    def create_edge(self, id1: str, id2: str, **attrs) -> None:
+        self.graph.create_edge(id1, id2, **attrs)
         self.visualizer.add_link(id1, id2)
         self.update_graph_view()
 
@@ -197,7 +197,7 @@ class Platform():
             if source in node_mapping:
                 for target in targets:
                     if target in node_mapping:
-                        self._filtered_graph.create_edge(node_mapping[source].get_id(), node_mapping[target].get_id())
+                        self._filtered_graph.create_edge(node_mapping[source].get_id(), node_mapping[target].get_id(), **self.graph._edges[source][target])
 
 
     def set_graph(self, new_graph: Graph):
