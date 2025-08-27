@@ -23,5 +23,8 @@ urlpatterns = [
     path('api/graph/data/', views.get_graph_data, name="get_graph_data"),
     path('get-plugins/', views.get_plugins, name="get_plugins"),
     path('plugin-fields/', views.plugin_fields, name='plugin_fields'),
-    path('load-graph/', views.load_graph, name="load_graph")
+    path('load-graph/', views.load_graph, name="load_graph"),
+    path('get-workspaces/', views.get_workspaces, name='get_workspaces'),
+    path('switch-workspace/', views.switch_workspace, name='switch_workspace'),
+    path('close-workspace/', views.close_workspace, name='close_workspace'),
 ]

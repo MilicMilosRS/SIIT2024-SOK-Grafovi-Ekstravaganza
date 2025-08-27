@@ -9,6 +9,7 @@ from django.views.decorators.csrf import csrf_exempt
 
 from graph_api import Graph, Node
 from graph_platform import Platform
+from workspace import WorkspaceManager
 from plugin_registry import get_plugin_names, create_plugin
 import os
 import tempfile
@@ -22,6 +23,9 @@ js = JSONDataSource(**kwargs)
 graph_instance=js.load_graph()
 
 platform = Platform(graph_instance, SimpleVisualizer(), kwargs["file_path"])
+
+wm = WorkspaceManager()
+wm.create_workspace(graph_instance)
 
 cli_instance = CommandLine(platform, kwargs["file_path"])
 
@@ -277,6 +281,9 @@ def get_graph_data(request):
     return JsonResponse({"output": "Invalid method"}, status=405)
 
 
+
+
+
 def get_plugins(request):
     plugins = get_plugin_names()
     print('dsfdsf')
@@ -329,15 +336,79 @@ def load_graph(request):
         # Load graph
         new_graph = plugin_instance.load_graph(**kwargs)
 
-        # Update platform
-        platform.set_graph(new_graph)
+        # Create a new workspace using WorkspaceManager
+        manager = WorkspaceManager()  # singleton instance
+        wid, workspace = manager.create_workspace(graph=new_graph)
 
         # Cleanup temp files if any
         for key in request.FILES:
             os.remove(kwargs[key])
 
-        return JsonResponse({"success": True})
+        return JsonResponse({
+            "success": True,
+            "workspace_id": wid,
+            "active_wid": manager.active_id
+        })
+    
+    except Exception as e:
+        return JsonResponse({"output": str(e)}, status=500)
+    
 
+
+
+
+
+def get_workspaces(request):
+    """
+    Returns all workspaces and the active workspace.
+    """
+    workspace_manager = WorkspaceManager()
+    all_ws = workspace_manager.get_all_workspaces()
+    ws_list = [{"id": wid, "name": f"Workspace {i+1}"} for i, wid in enumerate(all_ws.keys())]
+    return JsonResponse({"workspaces": ws_list, "active_wid": workspace_manager.active_id})
+
+
+@csrf_exempt
+def switch_workspace(request):
+    """
+    Switches the active workspace.
+    Expects JSON: { "wid": "workspace1" }
+    """
+    workspace_manager = WorkspaceManager()
+    if request.method != "POST":
+        return JsonResponse({"output": "Invalid method"}, status=405)
+
+    import json
+    try:
+        data = json.loads(request.body)
+        wid = data.get("wid")
+        if not wid or wid not in workspace_manager.workspaces:
+            return JsonResponse({"output": "Workspace not found"}, status=404)
+
+        workspace_manager.switch_workspace(wid)
+        print(wid)
+        return JsonResponse({"active_wid": wid})
     except Exception as e:
         return JsonResponse({"output": str(e)}, status=500)
 
+@csrf_exempt
+def close_workspace(request):
+    """
+    Closes a workspace.
+    Expects JSON: { "wid": "workspace1" }
+    """
+    workspace_manager = WorkspaceManager()
+    if request.method != "POST":
+        return JsonResponse({"output": "Invalid method"}, status=405)
+
+    import json
+    try:
+        data = json.loads(request.body)
+        wid = data.get("wid")
+        if not wid or wid not in workspace_manager.workspaces:
+            return JsonResponse({"output": "Workspace not found"}, status=404)
+
+        workspace_manager.close_workspace(wid)
+        return JsonResponse({"active_wid": workspace_manager.active_id})
+    except Exception as e:
+        return JsonResponse({"output": str(e)}, status=500)
