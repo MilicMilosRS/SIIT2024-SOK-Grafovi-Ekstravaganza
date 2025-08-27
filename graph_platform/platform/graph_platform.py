@@ -60,31 +60,31 @@ class Platform():
         if not self.graph.add_vertex(vertex):
             return False
         self.visualizer.add_node(vertex)
-        self._graph_updated()
+        self.update_graph_view()
         return True
 
     def edit_vertex(self, vertex: Node) -> bool:
         if not self.graph.edit_vertex(vertex):
             return False
         self.visualizer.edit_node(vertex)
-        self._graph_updated()
+        self.update_graph_view()
         return True
 
     def create_vertex(self) -> Node:
         node = self.graph.create_vertex()
         self.visualizer.add_node(node)
-        self._graph_updated()
+        self.update_graph_view()
         return node
     
     def delete_vertex(self, vertex: Node) -> None:
         self.graph.delete_vertex(vertex)
         self.visualizer.remove_node(vertex)
-        self._graph_updated()
+        self.update_graph_view()
     
     def edit_edge(self, old_source: str, new_target: str) -> None:
         self.graph.edit_edge(old_source, new_target)
         self.visualizer.edit_link(old_source, new_target)
-        self._graph_updated()
+        self.update_graph_view()
 
     def delete_edge(self, node1_id: str, node2_id: str) -> bool:
         self.graph.delete_edge(node1_id, node2_id)
@@ -93,7 +93,7 @@ class Platform():
     def create_edge(self, id1: str, id2: str) -> None:
         self.graph.create_edge(id1, id2)
         self.visualizer.add_link(id1, id2)
-        self._graph_updated()
+        self.update_graph_view()
 
     #TreeView stuff
     def get_tree_view(self) -> str:
@@ -104,6 +104,7 @@ class Platform():
         return data
     
     def expand_tree_view(self, tree_id: str):
+        print("Tree id " + tree_id)
         self.forestView.expand_node_by_tree_id(tree_id)
         self._graph_updated()
 
@@ -159,11 +160,6 @@ class Platform():
     def remove_filter(self, index: int):
         self.graph.remove_filter(index)
         self.update_graph_view()
-    def update_graph_view(self):
-        self._graph_updated()
-        self._create_filtered_graph()
-        self.forestView = ForestView(self._filtered_graph)
-        self.visualizer.revisualize_graph(self._filtered_graph)
 
     def get_filters(self):
         return self.graph._filters
@@ -217,4 +213,4 @@ class Platform():
             self.visualizer.revisualize_graph(new_graph)
         
         self.selected_node = None
-        self._graph_updated()
+        self.update_graph_view()
