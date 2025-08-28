@@ -77,9 +77,10 @@ class Platform():
         return node
     
     def delete_vertex(self, vertex: Node) -> None:
-        self.graph.delete_vertex(vertex)
+        attr = self.graph.delete_vertex(vertex)
         self.visualizer.remove_node(vertex)
         self.update_graph_view()
+        return attr
     
     def edit_edge(self, old_source: str, new_target: str, **attrs) -> None:
         self.graph.edit_edge(old_source, new_target, **attrs)
