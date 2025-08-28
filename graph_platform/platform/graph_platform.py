@@ -82,7 +82,7 @@ class Platform():
         self.update_graph_view()
     
     def edit_edge(self, old_source: str, new_target: str, **attrs) -> None:
-        self.graph.edit_edge(old_source, new_target)
+        self.graph.edit_edge(old_source, new_target, **attrs)
         self.visualizer.edit_link(old_source, new_target)
         self.update_graph_view()
 
