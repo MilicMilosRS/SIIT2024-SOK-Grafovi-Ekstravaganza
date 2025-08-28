@@ -17,7 +17,13 @@ class CreateCommand(Command.Command):
             return f"Node created successfully: {node.get_attributes()}"
         elif parsed["type"] == "edge":
             node1_id, node2_id = parsed["extra"][:2]
-            self.platform.create_edge(node1_id, node2_id)
+            attrs = {}
+            if parsed["id"]:
+                attrs["id"] = parsed["id"]
+            if parsed["properties"]:
+                attrs.update(parsed["properties"])
+            
+            self.platform.create_edge(node1_id, node2_id,**attrs)
             return f"Edge created successfully {node1_id} -> {node2_id}"
         else:
             return "ERROR: Invalid create command."
