@@ -18,7 +18,7 @@ from .management.commands.CommandLine import CommandLine
 from .management.commands import CreateCommand, EditCommand, DeleteCommand, SaveGraphCommand
 
 
-kwargs = {"file_path": "../large_graph.json"}
+kwargs = {"file_path": "../assets/large_graph.json"}
 js = JSONDataSource(**kwargs)
 graph_instance=js.load_graph()
 platform = Platform(graph_instance, SimpleVisualizer(), kwargs["file_path"])
